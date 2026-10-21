@@ -207,8 +207,12 @@ test('cerrar panel: el botón × cierra la página del panel', async ({ panel })
   await expect(panel.getByRole('heading', { name: 'Análisis disponible' })).toBeVisible({
     timeout: 15_000,
   });
+  const button = panel.getByRole('button', { name: 'Cerrar panel' });
+  await expect(button).toBeVisible();
+  // El clic cierra la página: se dispara desde la propia página y solo se espera el evento `close`
+  // (locator.click() puede fallar con «Target page closed» si el cierre gana la carrera).
   const closed = panel.waitForEvent('close');
-  await panel.getByRole('button', { name: 'Cerrar panel' }).click();
+  await button.evaluate((b: HTMLButtonElement) => setTimeout(() => b.click(), 0));
   await closed;
 });
 
