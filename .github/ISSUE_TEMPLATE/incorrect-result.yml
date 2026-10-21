@@ -1,0 +1,42 @@
+name: Incorrect result
+description: An investigation misquotes a source, misreads it or reaches a conclusion the evidence does not support.
+labels: [incorrect-result]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        We review the evidence, not opinions about the speaker. See the criteria in [docs/governance.md](https://github.com/nacorga/polifamia/blob/main/docs/governance.md).
+  - type: textarea
+    id: claim
+    attributes:
+      label: Investigated claim
+      description: Literal text, video and timestamp (or "pasted text").
+    validations:
+      required: true
+  - type: input
+    id: result
+    attributes:
+      label: Result shown and "comprobado el…" (checked on) date
+      placeholder: NEEDS_CONTEXT · 2026-10-21
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind of problem
+      options:
+        - The cited source does not say what is attributed to it
+        - Outdated source or broken link
+        - Wrong calculation or period
+        - A relevant primary source is missing
+        - Conclusion not supported by the evidence
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Link to the primary source (series, article, page) that shows it.
+    validations:
+      required: true

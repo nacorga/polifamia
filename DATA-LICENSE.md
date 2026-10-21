@@ -1,22 +1,24 @@
-# Licencias de datos y fixtures
+# Data and fixture licenses
 
-El código de este repositorio se distribuye bajo [AGPL-3.0-or-later](LICENSE). Los datos tienen licencias propias:
+The code in this repository is distributed under [AGPL-3.0-or-later](LICENSE). Data has its own licenses:
 
-| Ruta | Origen | Licencia |
+| Path | Origin | License |
 |---|---|---|
-| `corpus/videos/*` | Transcripciones y claims **DEMO** redactados por el proyecto; no corresponden a vídeos ni oradores reales | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/deed.es) |
-| `packages/evaluation/data/*.jsonl` | Datasets de evaluación del proyecto | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/deed.es) |
-| `packages/connectors/fixtures/factcheck.synthetic-shape.json` | Respuesta sintética con la forma documentada de Fact Check Tools | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/deed.es) |
-| `apps/extension/e2e/fixtures/video.webm` | Patrón de prueba generado con `ffmpeg testsrc` | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/deed.es) |
-| `corpus/documents/*` | Textos legales copiados del BOE | [Condiciones de reutilización del BOE](https://www.boe.es/informacion/aviso_legal/index.php) |
-| `packages/connectors/fixtures/ine/*` | Respuestas grabadas de la API Tempus3 del INE | [Aviso legal del INE](https://ine.es/dyngs/AYU/index.htm?cid=125) (CC BY 4.0) |
+| `corpus/videos/*` | **DEMO** transcripts and claims written by the project; they do not match any real video or speaker | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+| `packages/evaluation/data/*.jsonl` | Project evaluation datasets | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+| `packages/connectors/fixtures/factcheck.synthetic-shape.json` | Synthetic response with the documented Fact Check Tools shape | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+| `apps/extension/e2e/fixtures/video.webm` | Test pattern generated with `ffmpeg testsrc` | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+| `corpus/documents/*` | Legal texts copied from the BOE | [BOE reuse terms](https://www.boe.es/informacion/aviso_legal/index.php) |
+| `packages/connectors/fixtures/ine/*` | Recorded responses from the INE Tempus3 API | [INE legal notice](https://ine.es/dyngs/AYU/index.htm?cid=125) (CC BY 4.0) |
 
-## Atribución de fuentes institucionales
+## Attribution of institutional sources
 
-- **BOE**: «Fuente de los datos: Agencia Estatal Boletín Oficial del Estado» (<https://www.boe.es>). Está prohibido
-  desnaturalizar el sentido de la información.
-- **INE**: «Fuente: Sitio web del INE: www.ine.es». Si los datos se han tratado, «Elaboración propia con datos
-  extraídos del sitio web del INE: www.ine.es». Indicar la fecha de última actualización cuando conste.
+The source terms require these attributions, in Spanish:
 
-Ni el BOE ni el INE participan en este proyecto, lo patrocinan o lo respaldan. Cada documento del corpus conserva
-su URL de origen, la fecha de captura y sus condiciones en el campo `terms`.
+- **BOE**: «Fuente de los datos: Agencia Estatal Boletín Oficial del Estado» (<https://www.boe.es>). Distorting the
+  meaning of the information is prohibited.
+- **INE**: «Fuente: Sitio web del INE: www.ine.es». If the data has been processed, «Elaboración propia con datos
+  extraídos del sitio web del INE: www.ine.es». State the last update date when available.
+
+Neither the BOE nor the INE takes part in, sponsors or endorses this project. Each corpus document keeps its source
+URL, capture date and terms in its `terms` field.

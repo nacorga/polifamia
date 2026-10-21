@@ -1,30 +1,30 @@
-# Política de seguridad
+# Security policy
 
-## Cómo reportar una vulnerabilidad
+## Reporting a vulnerability
 
-**No abras una issue pública.** Usa el reporte privado de GitHub:
+**Do not open a public issue.** Use GitHub's private reporting:
 [Security → Report a vulnerability](https://github.com/nacorga/polifamia/security/advisories/new).
 
-Incluye los pasos para reproducirla, el impacto y la versión o commit afectado. Plazos orientativos: acuse de recibo
-en 5 días laborables y una primera evaluación en 15. Publicaremos el aviso y el crédito, si lo quieres, cuando haya
-una corrección.
+Include steps to reproduce, the impact and the affected commit. Polifamia is maintained by one person: we reply as
+soon as we can, with no guaranteed response times. Once a fix is available we publish the advisory and credit you if
+you wish.
 
-## Alcance
+## Scope
 
-Nos interesan especialmente:
+We are especially interested in:
 
-- **Abuso de la API**: saltarse el rate limit por IP o `X-Install-Id`, o el presupuesto diario
+- **API abuse**: bypassing the per-IP or per-`X-Install-Id` rate limit, or the daily budget
   ([ADR 0004](docs/adr/0004-rate-limit-y-presupuesto.md)).
-- **SSRF**: peticiones a hosts fuera de la whitelist de `packages/connectors/src/safe-fetch.ts`.
-- **Secretos en la extensión**: claves o configuración del servidor en el bundle que
-  `apps/extension/scripts/check-bundle.mjs` no detecte.
-- **Integridad de la evidencia**: inyección de prompt (transcripciones, documentos o texto pegado) que haga aparecer
-  citas, URLs o cifras fabricadas, o que fuerce `SUPPORTED`/`CONTRADICTED` sin evidencia primaria.
-- **Privacidad**: datos de navegación, de otras pestañas o identificadores personales que lleguen al backend.
+- **SSRF**: requests to hosts outside the allowlist in `packages/connectors/src/safe-fetch.ts`.
+- **Secrets in the extension**: keys or server configuration in the bundle that
+  `apps/extension/scripts/check-bundle.mjs` fails to detect.
+- **Evidence integrity**: prompt injection (transcripts, documents or pasted text) that produces fabricated citations,
+  URLs or figures, or forces `SUPPORTED`/`CONTRADICTED` without primary evidence.
+- **Privacy**: browsing data, other tabs or personal identifiers reaching the backend.
 
-Fuera de alcance: resultados discutibles que no se deban a un fallo de seguridad. Esos se reportan como
-[resultado incorrecto](https://github.com/nacorga/polifamia/issues/new?template=resultado-incorrecto.yml).
+Out of scope: debatable results that are not caused by a security flaw. Report those as an
+[incorrect result](https://github.com/nacorga/polifamia/issues/new?template=incorrect-result.yml).
 
-## Versiones soportadas
+## Supported versions
 
-Solo la rama `main`. Todavía no hay versiones publicadas.
+Only the `main` branch. There are no releases yet.

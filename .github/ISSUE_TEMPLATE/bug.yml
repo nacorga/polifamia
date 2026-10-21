@@ -1,28 +1,28 @@
 name: Bug
-description: Algo no funciona en la extensión, la API o las herramientas.
+description: Something does not work in the extension, the API or the tooling.
 labels: [bug]
 body:
   - type: textarea
     id: what
     attributes:
-      label: Qué pasa
-      description: Comportamiento observado y comportamiento esperado.
+      label: What happens
+      description: Observed and expected behaviour.
     validations:
       required: true
   - type: textarea
     id: steps
     attributes:
-      label: Pasos para reproducirlo
+      label: Steps to reproduce
       placeholder: '1. … 2. … 3. …'
     validations:
       required: true
   - type: input
     id: version
     attributes:
-      label: Commit o versión, navegador y sistema operativo
+      label: Commit or version, browser and operating system
   - type: textarea
     id: logs
     attributes:
-      label: Logs o capturas
-      description: Sin claves, tokens ni datos personales.
+      label: Logs or screenshots
+      description: No keys, tokens or personal data.
       render: text
