@@ -1,4 +1,4 @@
-import { createFetcher, FACTCHECK_HOST, INE_HOST, loadCorpus } from '@polifamia/connectors';
+import { checkLink, createFetcher, FACTCHECK_HOST, INE_HOST, loadCorpus } from '@polifamia/connectors';
 import {
   AnthropicLlmClient,
   DefaultEvidenceRetriever,
@@ -14,11 +14,14 @@ import { loadConfig } from '../config.js';
 import { createDb } from '../db/client.js';
 import { logger } from '../logger.js';
 import { INVESTIGATE_QUEUE, startBoss, type InvestigateJob } from '../queue.js';
-import { processInvestigation } from './process.js';
+import { processInvestigation, type ProcessOptions } from './process.js';
+import { purgeExpired, RETENTION_QUEUE } from './retention.js';
 
 const config = loadConfig();
 const { db, pool } = createDb(config.DATABASE_URL);
 const boss = await startBoss(config.DATABASE_URL, config.JOB_RETRY_LIMIT, config.JOB_TIMEOUT_MS);
+
+let linkChecker: ProcessOptions['checkLink'];
 
 async function buildInvestigator(): Promise<Investigator> {
   if (config.INVESTIGATION_MODE === 'demo') return new DemoInvestigator(config.DEMO_DELAY_MS);
@@ -31,6 +34,10 @@ async function buildInvestigator(): Promise<Investigator> {
     config.CORPUS_DIR ?? fileURLToPath(new URL('../../../../corpus/documents', import.meta.url));
   const corpus = await loadCorpus(corpusDir);
   const timeoutMs = Math.min(15_000, config.JOB_TIMEOUT_MS);
+  // Enlaces comprobables: hosts ya aprobados (INE + corpus). Las reseñas de terceros quedan `unverified`.
+  const linkHosts = [INE_HOST, ...new Set(corpus.map((d) => new URL(d.url).hostname))];
+  const linkFetcher = createFetcher(linkHosts, { timeoutMs: 5_000 });
+  linkChecker = (url) => checkLink(url, linkHosts, linkFetcher);
   return new RealInvestigator({
     llm: new AnthropicLlmClient(),
     models: { extract: config.LLM_MODEL_EXTRACT, synth: config.LLM_MODEL_SYNTH },
@@ -57,7 +64,15 @@ await boss.work<InvestigateJob>(INVESTIGATE_QUEUE, async ([job]) => {
     },
     lastAttempt: job.retryCount >= config.JOB_RETRY_LIMIT,
     correlationId: job.data.correlationId,
+    checkLink: linkChecker,
   });
+});
+
+// Retención (PRD §11): eventos de producto 30 días; se ejecuta a diario desde la propia cola.
+await boss.createQueue(RETENTION_QUEUE);
+await boss.schedule(RETENTION_QUEUE, '17 3 * * *');
+await boss.work(RETENTION_QUEUE, async () => {
+  logger.info({ stage: 'retention', ...(await purgeExpired(db)) }, 'retention purge');
 });
 logger.info({ mode: config.INVESTIGATION_MODE }, 'worker started');
 

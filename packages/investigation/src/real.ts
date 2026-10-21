@@ -11,6 +11,7 @@ import {
   type InvestigationLimits,
   type InvestigationOutcome,
   type Investigator,
+  type StageTrace,
 } from './types.js';
 import type { EvidenceVerifier } from './verify.js';
 
@@ -81,8 +82,24 @@ export interface RealInvestigatorDeps {
 export class RealInvestigator implements Investigator {
   constructor(private readonly deps: RealInvestigatorDeps) {}
 
-  async investigate(input: InvestigationInput, limits: InvestigationLimits): Promise<InvestigationOutcome> {
+  async investigate(
+    input: InvestigationInput,
+    limits: InvestigationLimits,
+    trace: StageTrace = () => {},
+  ): Promise<InvestigationOutcome> {
     const budget = new JobBudget(this.deps.llm, limits);
+    let t0 = performance.now();
+    const stage = (name: string, data: Record<string, number | string | boolean> = {}) => {
+      const now = performance.now();
+      trace(name, {
+        ms: Math.round(now - t0),
+        llmCalls: budget.usage.length,
+        tokens: budget.tokens,
+        costEur: budget.usage.reduce((s, u) => s + u.costEur, 0),
+        ...data,
+      });
+      t0 = now;
+    };
     const models: Record<string, string> = { verify: this.deps.models.synth, synth: this.deps.models.synth };
 
     // 1. Normalización: las afirmaciones manuales no traen campos estructurados.
@@ -93,11 +110,17 @@ export class RealInvestigator implements Investigator {
         { startMs: 0, endMs: 0, text: input.literal },
       ]);
       normalized = r.candidates[0]?.normalized ?? {};
+      stage('normalize');
     }
 
     // 2. Recuperación determinista.
     budget.checkTime();
     const retrieval = await this.deps.retriever.retrieve(input, normalized, limits.maxDocuments);
+    stage('retrieve', {
+      candidates: retrieval.candidates.length,
+      failures: retrieval.failures.length,
+      skipped: retrieval.skipped.length,
+    });
     const notes: string[] = [];
     for (const s of retrieval.skipped)
       notes.push(`No se han consultado ${ORIGIN_ES[s.origin]} (${s.reason}).`);
@@ -124,6 +147,7 @@ export class RealInvestigator implements Investigator {
       relation: c.fixedRelation ?? verification.relations.get(c.id) ?? 'irrelevant',
     }));
     const relevant = judged.filter((c) => c.relation !== 'irrelevant');
+    stage('verify', { judged: toJudge.length, relevant: relevant.length });
     for (const c of relevant) if (c.note) notes.push(c.note);
     const stats = relevant.find((c) => c.stats)?.stats ?? null;
 
@@ -132,6 +156,7 @@ export class RealInvestigator implements Investigator {
       relevant.map((c) => ({ ...c.evidence, relation: c.relation, kind: c.evidence.source.kind })),
     );
     if (decision.note) notes.push(decision.note);
+    stage('decide', { status: decision.status });
     if (decision.status === 'INSUFFICIENT_EVIDENCE') return this.insufficient(input, notes, budget, models);
 
     // 5. Síntesis con citas validadas (o plantilla).
@@ -143,6 +168,7 @@ export class RealInvestigator implements Investigator {
       notes,
     });
     if (exp.rejected.length) models.synthRejected = exp.rejected.join(',');
+    stage('synthesize', { citationRejected: exp.rejected.length > 0 });
     return {
       ...this.base(budget, models),
       status: 'COMPLETED',

@@ -51,8 +51,15 @@ export interface InvestigationOutcome {
   ttlMs: number;
 }
 
+/** Observabilidad por etapa (PRD §10.7): solo métricas y recuentos, nunca textos de la afirmación. */
+export type StageTrace = (stage: string, data: Record<string, number | string | boolean>) => void;
+
 export interface Investigator {
-  investigate(input: InvestigationInput, limits: InvestigationLimits): Promise<InvestigationOutcome>;
+  investigate(
+    input: InvestigationInput,
+    limits: InvestigationLimits,
+    trace?: StageTrace,
+  ): Promise<InvestigationOutcome>;
 }
 
 /** Error operativo: el job termina FAILED con este motivo, nunca con una conclusión inventada. */

@@ -65,6 +65,18 @@ Modo real (S4): `INVESTIGATION_MODE=real` en el `.env` del servidor y reiniciar 
 - Con `ANTHROPIC_API_KEY`: recupera INE (series aprobadas) + corpus `corpus/documents`; con `FACTCHECK_API_KEY`
   también verificaciones existentes. Modelos: `LLM_MODEL_EXTRACT`, `LLM_MODEL_SYNTH`.
 
+Beta técnica (S5):
+
+```bash
+# Rate limit: con RATE_LIMIT_PER_MINUTE=5, el 6.º POST /v1/investigations del minuto devuelve 429 rate_limited
+# (el polling GET no se limita). Presupuesto: DAILY_BUDGET_EUR agotado → 429 budget_exceeded (la caché sigue).
+docker exec infra-postgres-1 psql -U polifamia -d polifamia -c 'select name, cron from pgboss.schedule'
+# → retention-purge | 17 3 * * *   (borra eventos >30 días)
+```
+
+El build de la extensión ejecuta `scripts/check-bundle.mjs` (falla si hay secretos o permisos extra).
+Despliegue (plantilla, no desplegado): `infra/digitalocean-app.yaml`; ver `docs/release.md`.
+
 Evaluación del motor de evidencias:
 
 ```bash

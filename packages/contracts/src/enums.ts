@@ -84,6 +84,7 @@ export const ErrorCode = z.enum([
   'unsupported_video',
   'transcript_unavailable',
   'rate_limited',
+  'budget_exceeded',
   'source_unavailable',
   'validation',
   'not_found',

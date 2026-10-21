@@ -14,6 +14,8 @@ export interface ProcessOptions {
   /** Si es el último intento, un error inesperado deja el job en FAILED en vez de reintentar. */
   lastAttempt: boolean;
   correlationId?: string;
+  /** Comprobación de enlaces de fuentes (modo real); sin ella las evidencias quedan `unverified`. */
+  checkLink?: (url: string) => Promise<'verified' | 'unverified' | 'link_failed'>;
 }
 
 function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
@@ -58,6 +60,7 @@ export async function processInvestigation(
           declaredSource: claim?.declaredSource ?? null,
         },
         opts.limits,
+        (stage, data) => log.info({ stage, ...data }, 'stage'),
       ),
       opts.limits.timeoutMs,
     );
@@ -82,9 +85,16 @@ export async function processInvestigation(
     throw err; // pg-boss reintenta
   }
 
+  const checkLink = opts.checkLink;
+  const checks = checkLink
+    ? await Promise.all(outcome.evidence.map((ev) => checkLink(ev.source.url)))
+    : outcome.evidence.map(() => 'unverified' as const);
+  if (checkLink)
+    log.info({ stage: 'link_check', failed: checks.filter((c) => c === 'link_failed').length }, 'stage');
+
   const now = new Date();
   await db.transaction(async (tx) => {
-    for (const ev of outcome.evidence) {
+    for (const [i, ev] of outcome.evidence.entries()) {
       const [src] = await tx
         .insert(sources)
         .values({
@@ -105,6 +115,7 @@ export async function processInvestigation(
         provenance: ev.provenance,
         dataDate: ev.dataDate,
         accessedAt: now,
+        checkStatus: checks[i]!,
       });
     }
     await tx

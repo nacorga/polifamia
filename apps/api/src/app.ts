@@ -2,9 +2,10 @@ import 'reflect-metadata';
 import { Module, type DynamicModule } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
+import type { NextFunction, Request, Response } from 'express';
 import type { Config } from './config.js';
 import { createDb } from './db/client.js';
-import { ErrorFilter, requestLogger } from './http.js';
+import { ErrorFilter, rateLimit, requestLogger } from './http.js';
 import { ClaimsController } from './modules/claims/claims.controller.js';
 import { EventsController } from './modules/events/events.controller.js';
 import { FeedbackController } from './modules/feedback/feedback.controller.js';
@@ -42,8 +43,16 @@ export async function createApp(config: Config) {
     logger: ['error', 'warn'],
     bodyParser: false,
   });
+  app.set('trust proxy', config.TRUST_PROXY);
   app.useBodyParser('json', { limit: '16kb' });
   app.use(requestLogger);
+  // Solo las operaciones que cuestan (investigar) o escriben (feedback) se limitan; el polling no.
+  const limiter = rateLimit(config.RATE_LIMIT_PER_MINUTE);
+  app.use((req: Request, res: Response, next: NextFunction) =>
+    req.method === 'POST' && /^\/v1\/investigations(\/[^/]+\/feedback)?\/?$/.test(req.path)
+      ? limiter(req, res, next)
+      : next(),
+  );
   app.useGlobalFilters(new ErrorFilter());
   // Solo la extensión llama a la API desde el navegador. CORS no es autenticación (PRD §10.5).
   app.enableCors({ origin: /^chrome-extension:\/\/[a-p]{32}$/, exposedHeaders: ['X-Correlation-Id'] });

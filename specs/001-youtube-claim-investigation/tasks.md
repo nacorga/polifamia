@@ -129,19 +129,19 @@ en verde, tareas marcadas `[x]`, notas de gate en `docs/gates.md`, commit en `00
 
 ## Phase 5 — S5: Integración, seguridad y beta técnica (D4)
 
-- [ ] T068 Worker en modo `real` conectado al pipeline; `demo` sigue disponible y etiquetado
-- [ ] T069 Rate limit por IP + installId (`@nestjs/throttler`) y presupuesto diario global → `rate_limited` / `budget_exceeded`
-- [ ] T070 Logs de etapa con `investigationId`/`correlationId`, duración, coste; sin textos completos
-- [ ] T071 Validación de enlaces de fuentes (HEAD vía safe-fetch) → `check_status`
-- [ ] T072 Pantalla de cobertura y explicación de límites en el panel
-- [ ] T073 E2E: proveedor caído, rate limited, idempotencia doble clic, pestañas múltiples
-- [ ] T074 Test de estrés pequeño: 20 POST concurrentes misma claim → 1 job
-- [ ] T075 Revisión de permisos de la extensión y CSP; sin secretos en el bundle (test que inspecciona build)
-- [ ] T076 `docs/privacy.md` (qué se envía, retención 14/30 días, contacto) + purga programada de logs/eventos
-- [ ] T077 `infra/digitalocean-app.yaml` (API + worker + PG gestionado) y notas de release/rollback
-- [ ] T078 ADRs breves en `docs/adr/` (proveedor LLM, política de evidencia, ruta de contenido)
-- [ ] T079 Validación completa de `quickstart.md` + Definition of Done §14 en `docs/gates.md`
-- [ ] T080 README raíz con arquitectura, comandos y estado de gates
+- [x] T068 Worker en modo `real` conectado al pipeline; `demo` sigue disponible y etiquetado
+- [x] T069 Rate limit por IP + installId (`@nestjs/throttler`) y presupuesto diario global → `rate_limited` / `budget_exceeded`
+- [x] T070 Logs de etapa con `investigationId`/`correlationId`, duración, coste; sin textos completos
+- [x] T071 Validación de enlaces de fuentes (HEAD vía safe-fetch) → `check_status`
+- [x] T072 Pantalla de cobertura y explicación de límites en el panel
+- [x] T073 E2E: proveedor caído, rate limited, idempotencia doble clic, pestañas múltiples
+- [x] T074 Test de estrés pequeño: 20 POST concurrentes misma claim → 1 job
+- [x] T075 Revisión de permisos de la extensión y CSP; sin secretos en el bundle (test que inspecciona build)
+- [x] T076 `docs/privacy.md` (qué se envía, retención 14/30 días, contacto) + purga programada de logs/eventos
+- [x] T077 `infra/digitalocean-app.yaml` (API + worker + PG gestionado) y notas de release/rollback
+- [x] T078 ADRs breves en `docs/adr/` (proveedor LLM, política de evidencia, ruta de contenido)
+- [x] T079 Validación completa de `quickstart.md` + Definition of Done §14 en `docs/gates.md`
+- [x] T080 README raíz con arquitectura, comandos y estado de gates
 
 ---
 

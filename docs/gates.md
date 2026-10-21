@@ -139,4 +139,67 @@ Pendiente para cerrar G3:
   0 citas fabricadas, contexto estadístico ≥90 %); revisar términos de reutilización del corpus.
 - Ampliar registro INE y corpus (BOE, AIReF) según las afirmaciones del catálogo real (G0).
 
-## G4 — Beta técnica (D4) · pendiente
+## G4 — Beta técnica (D4) · GO técnico local · NO-GO a distribución (gates humanos abiertos)
+
+Construido (S5, 2026-10-21):
+
+- Worker en modo `real` conectado al pipeline (S4) con trazas por etapa (`normalize`, `retrieve`, `verify`,
+  `decide`, `synthesize`, `link_check`) que registran duración, llamadas, tokens y coste con
+  `investigationId`/`correlationId`, sin textos. `demo` sigue disponible y etiquetado.
+- Rate limit por IP y por `X-Install-Id` (independientes) en `POST /v1/investigations` y feedback; el polling no
+  se limita. Presupuesto global diario sobre costes persistidos → `429 budget_exceeded` para trabajo nuevo
+  (la caché se sigue sirviendo). ADR 0004.
+- Comprobación de enlaces vía `safe-fetch` (whitelist INE + hosts del corpus) → `check_status`
+  `verified`/`link_failed`; reseñas de terceros fuera de whitelist quedan `unverified` (sin fetch arbitrario).
+- Extensión: estados distintos y neutrales para `provider_error`, `no_llm_key`, `timeout`, `budget_exceeded`,
+  `source_unavailable` y `rate_limited`; «Reintentar» en un job FAILED crea una investigación nueva.
+  Vista «Cobertura y límites». Permiso `tabs` eliminado (solo `sidePanel` + `storage`), CSP explícita.
+- `scripts/check-bundle.mjs` se ejecuta tras cada build y falla si hay claves, nombres de variables del servidor,
+  URLs con credenciales, permisos extra, host permissions amplios o CSP relajada.
+- Retención: job pg-boss `retention-purge` (diario 03:17 UTC) borra eventos >30 días; logs 14 días en plataforma.
+- `infra/digitalocean-app.yaml` (no desplegado), `docs/release.md`, `docs/privacy.md`, ADRs 0001–0004.
+
+Evidencia (2026-10-21):
+
+- `pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm build && pnpm e2e` en verde.
+  Tests 142: contracts 6, connectors 26, extensión 12, investigation 59, evaluation 7, API 20 (PostgreSQL real),
+  importador 12. E2E 17 (Playwright + extensión MV3 + API/worker reales en DEMO).
+- API: 20 POST concurrentes con claves distintas → 1 investigación y 1 job pg-boss; presupuesto agotado → 200
+  desde caché y 429 `budget_exceeded` para lo nuevo; rate limit por IP e installId; `check_status` persistido;
+  purga de eventos >30 días.
+- E2E nuevos: cinco fallos operativos con estado propio y sin conclusión; 429 `rate_limited` y `budget_exceeded`
+  al crear; doble clic → un solo ID; dos pestañas sin mezcla de vídeos; cobertura sin perder la vista; panel
+  deshabilitado fuera de YouTube y URL de la otra pestaña invisible para la extensión.
+- Quickstart ejecutado a mano (BD de desarrollo, `RATE_LIMIT_PER_MINUTE=5`): health ok; availability
+  `claims_ready`/`unsupported_video`; POST 202 → PENDING → RUNNING → `COMPLETED/NEEDS_CONTEXT` DEMO; feedback 201;
+  5 POST más → `202 202 202 429 429`; 7 GET de polling → todos 200; OpenAPI con 7 rutas; schedule
+  `retention-purge | 17 3 * * * | UTC` registrado; logs de worker con `stage` y `correlationId`.
+
+## Definition of Done (PRD §14)
+
+| # | Criterio | Estado | Evidencia / pendiente |
+|---|---|---|---|
+| 1 | Instalar y ejecutar en Chrome sin errores críticos | ⚠️ parcial | E2E en Chromium con la extensión cargada; falta prueba manual en Chrome estable sobre youtube.com real |
+| 2 | Conjunto útil de vídeos autorizados; no compatibles gestionados | ❌ humano (G0) | No compatibles ✅ (E2E). Catálogo real: 0 vídeos; solo 2 DEMO |
+| 3 | Del minuto a la evidencia sin salir de YouTube | ✅ (DEMO) | E2E lista → seek → investigar → fuentes |
+| 4 | Fuentes abren documentos reales; citas localizables | ⚠️ parcial | INE y BOE reales grabados con URL exacta y localizador; Fact Check sintético hasta tener clave; auditoría humana pendiente (G3) |
+| 5 | Ninguna conclusión categórica sin evidencia pertinente | ⚠️ diseño ✅, medición pendiente | Política determinista + tests; eval offline 0 violaciones; falta eval real con clave y auditoría humana |
+| 6 | Fallos de red/permisos/proveedores/sin evidencia no inventan | ✅ | Tests API + E2E de cada `failureReason`, API caída, presupuesto |
+| 7 | No obstaculiza reproducción; SPA | ✅ | E2E: seek sin cambiar pausa, sin overlays, navegación SPA, resultado tardío descartado |
+| 8 | Tests automatizados y regresión con distintos oradores | ✅ técnico / ❌ humano | 142 tests + 17 E2E + invariancia de orador; dataset ≥100 revisado por 2 personas pendiente (G2) |
+| 9 | Condiciones de acceso al contenido, privacidad y seguridad | ⚠️ técnico ✅, legal pendiente | Permisos mínimos, bundle check, SSRF, rate limit; revisión jurídica YouTube/CWS/RGPD pendiente (`docs/privacy.md`) |
+| 10 | Instrumentados utilidad, repetición, latencia, coste y errores | ✅ | Eventos FR-017, `latency_ms`/`cost_eur`/`failure_reason` por investigación, trazas por etapa |
+
+**Decisión G4**: el sistema es desplegable y el control de costes funciona en local. **No distribuir** a
+usuarios hasta cerrar:
+
+- [ ] **G0 legal** — 12–20 vídeos con permiso documentado y revisión jurídica (`docs/d0-viability.md` §4).
+- [ ] **Clave LLM** — `pnpm eval:extraction -- --real` y `pnpm eval:investigation -- --real`; comparar modelo
+      económico vs. capaz.
+- [ ] **Clave Fact Check** — grabar respuesta real y sustituir el fixture sintético.
+- [ ] **G2 humano** — dataset ≥100 ejemplos revisados por dos personas.
+- [ ] **G3 humano** — auditoría de cada referencia en la muestra de aceptación (≥95 %, 0 citas fabricadas).
+- [ ] **Privacidad/CWS** — responsable, contacto, DPA con proveedores, retención de texto manual.
+- [ ] **Prueba manual** en Chrome estable sobre youtube.com real.
+- [ ] **Despliegue** — aprobar coste y crear la app en DigitalOcean (`infra/digitalocean-app.yaml`).
+- [ ] **V1–V3** — usabilidad moderada, beta cerrada instrumentada, validación comercial (PRD §13).

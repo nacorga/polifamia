@@ -86,3 +86,32 @@ export function requestLogger(req: CorrelatedRequest, res: Response, next: NextF
 }
 
 export const InstallId = z.uuid();
+
+/**
+ * Límite por minuto por IP y, por separado, por `X-Install-Id` (FR-016, PRD §10.5). El installId es
+ * anónimo y falsificable: por eso la IP se limita siempre, aunque cambie el identificador.
+ * ponytail: ventana fija en memoria de un solo proceso; con varias instancias, mover a PostgreSQL.
+ */
+export function rateLimit(perMinute: number, now: () => number = Date.now) {
+  const hits = new Map<string, { windowStart: number; count: number }>();
+  const over = (key: string, t: number) => {
+    const h = hits.get(key);
+    if (!h || t - h.windowStart >= 60_000) {
+      hits.set(key, { windowStart: t, count: 1 });
+      return false;
+    }
+    return ++h.count > perMinute;
+  };
+  return (req: Request, res: Response, next: NextFunction) => {
+    const t = now();
+    if (hits.size > 10_000) for (const [k, h] of hits) if (t - h.windowStart >= 60_000) hits.delete(k);
+    const installId = InstallId.safeParse(req.header('x-install-id'));
+    const limited = [
+      over(`ip:${req.ip}`, t),
+      installId.success ? over(`install:${installId.data}`, t) : false,
+    ].some(Boolean);
+    if (!limited) return next();
+    res.setHeader('Retry-After', '60');
+    res.status(429).json({ error: { code: 'rate_limited', message: 'Too many requests' } });
+  };
+}

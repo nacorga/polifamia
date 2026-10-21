@@ -2,6 +2,7 @@ import type { Claim, CreateInvestigation, Investigation } from '@polifamia/contr
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { ClaimList } from '../../src/components/ClaimList';
+import { Coverage } from '../../src/components/Coverage';
 import { FeedbackForm } from '../../src/components/FeedbackForm';
 import { FailureNotice, InvestigationView } from '../../src/components/InvestigationView';
 import { ManualClaim } from '../../src/components/ManualClaim';
@@ -14,6 +15,7 @@ let panelOpenedSent = false;
 
 export function App() {
   const active = useActiveVideo();
+  const [coverage, setCoverage] = useState(false);
   useEffect(() => {
     if (panelOpenedSent) return;
     panelOpenedSent = true;
@@ -38,16 +40,25 @@ export function App() {
         </div>
         <p className="text-xs text-muted">
           Qué se ha afirmado, qué fuentes hay y qué queda sin probar. Solo se envía a {API_HOST} el
-          identificador del vídeo y lo que decidas investigar.
+          identificador del vídeo y lo que decidas investigar.{' '}
+          {!coverage && (
+            <Button variant="link" onClick={() => setCoverage(true)}>
+              Cobertura y límites
+            </Button>
+          )}
         </p>
       </header>
       <main aria-live="polite">
-        {active ? (
-          // `key` reinicia todo el estado al cambiar de pestaña o de vídeo: nunca se mezclan datos.
-          <VideoPanel key={`${active.tabId}:${active.videoId}`} video={active} />
-        ) : (
-          <p className="text-muted">Conectando con la pestaña…</p>
-        )}
+        {coverage && <Coverage onBack={() => setCoverage(false)} />}
+        {/* Oculto, no desmontado: abrir «Cobertura» no pierde una investigación en curso. */}
+        <div hidden={coverage}>
+          {active ? (
+            // `key` reinicia todo el estado al cambiar de pestaña o de vídeo: nunca se mezclan datos.
+            <VideoPanel key={`${active.tabId}:${active.videoId}`} video={active} />
+          ) : (
+            <p className="text-muted">Conectando con la pestaña…</p>
+          )}
+        </div>
       </main>
     </div>
   );

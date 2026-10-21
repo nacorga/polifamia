@@ -10,8 +10,11 @@ export default defineConfig({
     name: 'Polifamia — investigar afirmaciones',
     description:
       'Investiga afirmaciones de vídeos de YouTube con fuentes verificables. Solo actúa cuando abres el panel.',
-    permissions: ['sidePanel', 'storage', 'tabs'],
+    // Sin `tabs`: la URL solo se lee en pestañas con host permission (YouTube), no del resto (FR-012).
+    permissions: ['sidePanel', 'storage'],
     host_permissions: ['*://*.youtube.com/*', `${new URL(apiUrl).origin}/*`],
     action: { default_title: 'Abrir Polifamia' },
+    // CSP explícita de MV3: solo scripts propios, sin eval ni orígenes remotos.
+    content_security_policy: { extension_pages: "script-src 'self'; object-src 'self'" },
   },
 });

@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { CreateInvestigation, Investigation } from '@polifamia/contracts';
 import { cacheKey } from '@polifamia/investigation';
-import { and, desc, eq, gt, inArray, isNull, max } from 'drizzle-orm';
+import { and, desc, eq, gt, gte, inArray, isNull, max, sum } from 'drizzle-orm';
 import type { PgBoss } from 'pg-boss';
 import type { Config } from '../../config.js';
 import type { Db } from '../../db/client.js';
@@ -60,6 +60,10 @@ export class InvestigationsService {
     const inflight = await this.findInflight(key);
     if (inflight) return this.result(inflight);
 
+    // Presupuesto global diario (FR-016): la caché y lo ya en curso se sirven; lo nuevo, no.
+    if ((await this.spentToday()) >= this.config.DAILY_BUDGET_EUR)
+      throw new ApiError('budget_exceeded', 'Daily investigation budget exhausted', 429);
+
     const [prev] = await this.db
       .select({ v: max(investigations.version) })
       .from(investigations)
@@ -100,6 +104,17 @@ export class InvestigationsService {
     const row = await this.db.query.investigations.findFirst({ where: eq(investigations.id, id) });
     if (!row) throw new ApiError('not_found', 'Investigation not found', 404);
     return this.serialize(row);
+  }
+
+  /** Coste persistido desde las 00:00 UTC. ponytail: los jobs en curso aún no suman; margen = 1 job. */
+  async spentToday(): Promise<number> {
+    const start = new Date();
+    start.setUTCHours(0, 0, 0, 0);
+    const [row] = await this.db
+      .select({ total: sum(investigations.costEur) })
+      .from(investigations)
+      .where(gte(investigations.createdAt, start));
+    return Number(row?.total ?? 0);
   }
 
   private findByIdempotencyKey(k: string) {

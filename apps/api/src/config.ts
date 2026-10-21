@@ -13,6 +13,8 @@ const Env = z.object({
   JOB_RETRY_LIMIT: z.coerce.number().int().min(0).default(2),
   DAILY_BUDGET_EUR: z.coerce.number().positive().default(5),
   RATE_LIMIT_PER_MINUTE: int(20),
+  /** Saltos de proxy de confianza para `req.ip` (App Platform = 1). 0 en local. */
+  TRUST_PROXY: z.coerce.number().int().min(0).default(0),
   DEMO_DELAY_MS: z.coerce.number().int().min(0).default(1500),
   ANTHROPIC_API_KEY: z.string().optional(),
   LLM_MODEL_EXTRACT: z.string().default('claude-haiku-5-5'),

@@ -20,15 +20,18 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createApp } from '../dist/app.js';
+import { rateLimit } from '../dist/http.js';
 import { loadConfig } from '../dist/config.js';
 import { createDb } from '../dist/db/client.js';
 import { runMigrations } from '../dist/db/migrate.js';
-import { claims, investigations, transcripts, videos } from '../dist/db/schema.js';
+import { claims, events, evidence, investigations, transcripts, videos } from '../dist/db/schema.js';
 import { processInvestigation } from '../dist/worker/process.js';
+import { purgeExpired } from '../dist/worker/retention.js';
 
 const DATABASE_URL =
   process.env.DATABASE_URL_TEST ?? 'postgres://polifamia:polifamia@localhost:5432/polifamia_test';
-const config = loadConfig({ DATABASE_URL, INVESTIGATION_MODE: 'demo' });
+// Límite alto en la suite: el rate limit se prueba aparte con su propia instancia.
+const config = loadConfig({ DATABASE_URL, INVESTIGATION_MODE: 'demo', RATE_LIMIT_PER_MINUTE: '100000' });
 const limits = { timeoutMs: 2000, maxLlmCalls: 1, maxTokens: 1, maxDocuments: 1 };
 const { db, pool } = createDb(DATABASE_URL);
 
@@ -165,7 +168,7 @@ describe('investigations', () => {
 
   it('deduplicates concurrent requests for the same claim into one investigation', async () => {
     const responses = await Promise.all(
-      Array.from({ length: 10 }, (_, i) =>
+      Array.from({ length: 20 }, (_, i) =>
         post('/v1/investigations', { claimId: checkableId, idempotencyKey: `concurrent-${i}` }),
       ),
     );
@@ -174,6 +177,31 @@ describe('investigations', () => {
     );
     expect(responses.every((r) => r.status === 202)).toBe(true);
     expect(ids.size).toBe(1);
+    const rows = await db.select().from(investigations);
+    expect(rows).toHaveLength(1);
+    const [{ count }] = (
+      await db.execute<{ count: string }>(
+        sql`SELECT count(*) FROM pgboss.job WHERE name = 'investigate' AND singleton_key = ${rows[0]!.cacheKey}`,
+      )
+    ).rows as [{ count: string }];
+    expect(Number(count)).toBe(1);
+  });
+
+  it('stops creating new investigations once the daily budget is spent (cache still served)', async () => {
+    const done = await inv(post('/v1/investigations', { claimId: checkableId, idempotencyKey: 'budget-1' }));
+    await run(done.id);
+    await db
+      .update(investigations)
+      .set({ costEur: config.DAILY_BUDGET_EUR })
+      .where(eq(investigations.id, done.id));
+    const cached = await post('/v1/investigations', { claimId: checkableId, idempotencyKey: 'budget-2' });
+    expect(cached.status).toBe(200);
+    const fresh = await post('/v1/investigations', {
+      manualClaim: 'El PIB creció un 3 % en 2024',
+      idempotencyKey: 'budget-3',
+    });
+    expect(fresh.status).toBe(429);
+    expect(await fresh.json()).toMatchObject({ error: { code: 'budget_exceeded' } });
   });
 
   it('refuses to investigate opinions and unknown claims', async () => {
@@ -373,6 +401,93 @@ describe('real mode (S4)', () => {
     expect(rows.find((r) => r.id === first.id)?.supersededBy).toBe(second.id);
     expect(rows.find((r) => r.id === second.id)?.supersededBy).toBeNull();
     expect((await inv(api(`/v1/investigations/${first.id}`))).version).toBe(1); // sigue consultable
+  });
+});
+
+describe('link check and retention (S5)', () => {
+  it('persists the link check status of each evidence', async () => {
+    const created = await inv(
+      post('/v1/investigations', { claimId: checkableId, idempotencyKey: 'links-check-1' }),
+    );
+    await processInvestigation(db, new DemoInvestigator(0), created.id, {
+      limits,
+      lastAttempt: true,
+      checkLink: async () => 'link_failed',
+    });
+    const rows = await db.select().from(evidence).where(eq(evidence.investigationId, created.id));
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.every((r) => r.checkStatus === 'link_failed')).toBe(true);
+    const shown = await inv(api(`/v1/investigations/${created.id}`));
+    expect(shown.evidence.every((e) => e.checkStatus === 'link_failed')).toBe(true);
+  });
+
+  it('purges product events older than 30 days only', async () => {
+    const installId = '0b6f6f9e-7a0e-4f4c-9d0e-2b8f3c1d5a6e';
+    await db.insert(events).values([
+      { name: 'panel_opened', installId, createdAt: new Date(Date.now() - 31 * 864e5) },
+      { name: 'panel_opened', installId },
+    ]);
+    expect(await purgeExpired(db)).toEqual({ eventsDeleted: 1 });
+    expect(await db.select().from(events)).toHaveLength(1);
+  });
+});
+
+describe('rate limit', () => {
+  const fakeRes = () => {
+    const r = { statusCode: 200, body: null as unknown, headers: {} as Record<string, string> };
+    return Object.assign(r, {
+      setHeader: (k: string, v: string) => void (r.headers[k] = v),
+      status: (c: number) => ((r.statusCode = c), r),
+      json: (b: unknown) => void (r.body = b),
+    });
+  };
+  const call = (mw: ReturnType<typeof rateLimit>, ip: string, installId?: string) => {
+    const res = fakeRes();
+    let passed = false;
+    const req = { ip, header: (h: string) => (h === 'x-install-id' ? installId : undefined) };
+    mw(req as never, res as never, () => void (passed = true));
+    return { passed, res };
+  };
+  const A = '0b6f6f9e-7a0e-4f4c-9d0e-2b8f3c1d5a6e';
+
+  it('limits per IP and per install id independently, and resets each minute', () => {
+    let t = 0;
+    const mw = rateLimit(2, () => t);
+    expect(call(mw, '1.1.1.1', A).passed).toBe(true);
+    expect(call(mw, '2.2.2.2', A).passed).toBe(true);
+    // Tercera petición del mismo installId desde otra IP: limitada por installId.
+    const third = call(mw, '3.3.3.3', A);
+    expect(third.passed).toBe(false);
+    expect(third.res.statusCode).toBe(429);
+    expect(third.res.body).toEqual({ error: { code: 'rate_limited', message: 'Too many requests' } });
+    // Rotar el installId no evita el límite por IP.
+    expect(call(mw, '1.1.1.1').passed).toBe(true);
+    expect(call(mw, '1.1.1.1', crypto.randomUUID()).passed).toBe(false);
+    t += 60_000;
+    expect(call(mw, '1.1.1.1', A).passed).toBe(true);
+  });
+
+  it('is wired on POST /v1/investigations but not on polling', async () => {
+    const small = await createApp({ ...config, RATE_LIMIT_PER_MINUTE: 2 });
+    await small.listen(0);
+    const url = (await small.getUrl()).replace('[::1]', 'localhost');
+    try {
+      const p = (k: string) =>
+        fetch(`${url}/v1/investigations`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ manualClaim: 'El paro bajó un 5 % en 2024', idempotencyKey: k }),
+        });
+      const statuses = [
+        (await p('ratelimit-1')).status,
+        (await p('ratelimit-2')).status,
+        (await p('ratelimit-3')).status,
+      ];
+      expect(statuses).toEqual([202, 202, 429]);
+      for (let i = 0; i < 4; i++) expect((await fetch(`${url}/health`)).status).toBe(200);
+    } finally {
+      await small.close();
+    }
   });
 });
 

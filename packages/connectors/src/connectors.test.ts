@@ -5,6 +5,7 @@ import { loadCorpus, searchCorpus } from './corpus.js';
 import { parseFactCheckResponse, redactKey, searchFactChecks } from './factcheck.js';
 import { fetchIneSeries, ineQueryUrl, parseIneResponse, periodRange } from './ine/client.js';
 import { findSeries, INE_SERIES, territoryMatches } from './ine/registry.js';
+import { checkLink } from './link-check.js';
 import { assertAllowedUrl, safeFetch, SourceError, type Fetcher } from './safe-fetch.js';
 
 const fixture = (p: string) =>
@@ -146,5 +147,37 @@ describe('corpus', () => {
     expect(hits[0]?.locator).toBe('BOE-A-2024-2251, artículo 1');
     expect(hits[0]?.text).toContain('1.134 euros/mes');
     expect(searchCorpus(docs, 'la afiliación a la Seguridad Social superó los 21 millones')).toEqual([]);
+  });
+});
+
+describe('checkLink', () => {
+  const ok =
+    (status: number): Fetcher =>
+    async (url) => ({ url, status, text: '' });
+  it('verifies reachable whitelisted links (HEAD)', async () => {
+    const calls: unknown[] = [];
+    const f: Fetcher = async (url, opts) => (
+      calls.push(opts?.method ?? 'GET'),
+      { url, status: 200, text: '' }
+    );
+    expect(await checkLink('https://servicios.ine.es/x', HOSTS, f)).toBe('verified');
+    expect(calls).toEqual(['HEAD']);
+  });
+  it('falls back to GET when HEAD is not allowed', async () => {
+    const f: Fetcher = async (url, opts) => ({ url, status: opts?.method === 'HEAD' ? 405 : 200, text: '' });
+    expect(await checkLink('https://servicios.ine.es/x', HOSTS, f)).toBe('verified');
+  });
+  it('marks 4xx/5xx and network errors as link_failed', async () => {
+    expect(await checkLink('https://servicios.ine.es/x', HOSTS, ok(404))).toBe('link_failed');
+    const boom: Fetcher = async () => {
+      throw new SourceError('down', 'x');
+    };
+    expect(await checkLink('https://servicios.ine.es/x', HOSTS, boom)).toBe('link_failed');
+  });
+  it('never fetches non-whitelisted hosts: unverified', async () => {
+    const f = vi.fn(ok(200));
+    expect(await checkLink('https://maldita.example/review', HOSTS, f)).toBe('unverified');
+    expect(await checkLink('http://169.254.169.254/latest', HOSTS, f)).toBe('unverified');
+    expect(f).not.toHaveBeenCalled();
   });
 });

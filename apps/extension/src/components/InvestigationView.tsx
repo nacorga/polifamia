@@ -76,7 +76,14 @@ export function InvestigationView({ id, onBack, onSeek, onFeedback, onReinvestig
       </Notice>
     );
   if (!inv || (state !== 'investigation_ready' && state !== 'insufficient_evidence'))
-    return <FailureNotice state={state} action={back} onRetry={() => void query.refetch()} />;
+    return (
+      <FailureNotice
+        state={inv?.failureReason ?? state}
+        action={back}
+        // Un job FAILED es definitivo: reintentar crea una investigación nueva; si no, se vuelve a consultar.
+        onRetry={inv?.status === 'FAILED' ? () => onReinvestigate(inv) : () => void query.refetch()}
+      />
+    );
 
   const conclusion = CONCLUSION[inv.conclusion ?? 'INSUFFICIENT_EVIDENCE'];
   const expired = inv.expiresAt !== null && new Date(inv.expiresAt) < new Date();
@@ -224,6 +231,34 @@ function EvidenceItem({
   );
 }
 
+/**
+ * Copy por estado UX o motivo de fallo (FR-009): cada causa se explica por separado y siempre deja
+ * claro que no se ha generado ninguna conclusión.
+ */
+const FAILURE_COPY: Record<string, [string, string]> = {
+  rate_limited: ['Límite de uso alcanzado', 'Espera unos minutos y vuelve a intentarlo.'],
+  budget_exceeded: [
+    'Límite diario de investigaciones alcanzado',
+    'Para controlar el coste, hoy no se inician investigaciones nuevas. Los resultados ya comprobados siguen disponibles.',
+  ],
+  source_unavailable: [
+    'Una fuente no está disponible ahora mismo',
+    'La investigación no se ha completado. No mostramos conclusiones sin fuentes; inténtalo más tarde.',
+  ],
+  no_llm_key: [
+    'Investigación automática no disponible',
+    'El servidor no tiene activado el motor de investigación. No se ha generado ningún resultado.',
+  ],
+  provider_error: [
+    'El servicio de análisis ha fallado',
+    'La investigación se ha detenido sin conclusión. Puedes reintentarlo en unos minutos.',
+  ],
+  timeout: [
+    'La investigación ha tardado demasiado',
+    'Se ha detenido al superar el tiempo máximo, sin conclusión. Puedes reintentarlo.',
+  ],
+};
+
 export function FailureNotice({
   state,
   action,
@@ -238,13 +273,7 @@ export function FailureNotice({
       Reintentar
     </Button>
   );
-  const body = {
-    rate_limited: ['Límite de uso alcanzado', 'Espera unos minutos y vuelve a intentarlo.'],
-    source_unavailable: [
-      'Una fuente no está disponible ahora mismo',
-      'La investigación no se ha completado. No mostramos conclusiones sin fuentes; inténtalo más tarde.',
-    ],
-  }[state] ?? [
+  const body = FAILURE_COPY[state] ?? [
     'No se ha podido completar',
     'Ha ocurrido un error de conexión o del servidor. No se ha generado ningún resultado.',
   ];

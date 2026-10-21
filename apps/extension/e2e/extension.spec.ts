@@ -186,16 +186,21 @@ test('panel lateral: se abre con el icono y solo está habilitado en YouTube', a
   void youtube;
   const result = await sw.evaluate(async () => {
     const [yt] = await chrome.tabs.query({ url: 'https://www.youtube.com/*' });
-    const [ex] = await chrome.tabs.query({ url: 'https://example.org/*' });
+    // Sin permiso `tabs` la extensión no ve la URL de pestañas fuera de YouTube (FR-012).
+    const ex = (await chrome.tabs.query({})).find(
+      (t) => t.id !== yt!.id && !t.url && t.status === 'complete',
+    );
     return {
       behavior: await chrome.sidePanel.getPanelBehavior(),
       youtube: await chrome.sidePanel.getOptions({ tabId: yt!.id! }),
       other: await chrome.sidePanel.getOptions({ tabId: ex!.id! }),
+      otherUrlVisible: ex!.url !== undefined,
     };
   });
   expect(result.behavior.openPanelOnActionClick).toBe(true);
   expect(result.youtube.enabled).toBe(true);
   expect(result.other.enabled).toBe(false);
+  expect(result.otherUrlVisible).toBe(false);
 });
 
 test('cerrar panel: el botón × cierra la página del panel', async ({ panel }) => {
@@ -205,4 +210,95 @@ test('cerrar panel: el botón × cierra la página del panel', async ({ panel })
   const closed = panel.waitForEvent('close');
   await panel.getByRole('button', { name: 'Cerrar panel' }).click();
   await closed;
+});
+
+/** Investigación terminada en FAILED con un motivo operativo (respuesta simulada de la API). */
+const failedInvestigation = (failureReason: string) => ({
+  id: '11111111-1111-4111-8111-111111111111',
+  version: 1,
+  status: 'FAILED',
+  conclusion: null,
+  isDemo: false,
+  claim: { kind: 'manual', text: 'El paro bajó un 5 % en 2024 en España.' },
+  summary: null,
+  context: null,
+  limitations: null,
+  stats: null,
+  evidence: [],
+  failureReason,
+  checkedAt: null,
+  expiresAt: null,
+  createdAt: new Date().toISOString(),
+});
+
+for (const [reason, title] of [
+  ['provider_error', 'El servicio de análisis ha fallado'],
+  ['no_llm_key', 'Investigación automática no disponible'],
+  ['timeout', 'La investigación ha tardado demasiado'],
+  ['budget_exceeded', 'Límite diario de investigaciones alcanzado'],
+  ['source_unavailable', 'Una fuente no está disponible ahora mismo'],
+] as const) {
+  test(`fallo operativo ${reason}: estado propio, sin conclusión`, async ({ panel }) => {
+    await panel.route(`${API}/v1/investigations**`, (route) =>
+      route.fulfill({ json: failedInvestigation(reason), status: 200 }),
+    );
+    const [claim] = (await claimsOf('DEMOvideo01')).filter((c) => c.checkability === 'CHECKABLE');
+    await panel.getByRole('button', { name: `Investigar: ${claim!.literal}` }).click();
+    await expect(panel.getByRole('heading', { name: title })).toBeVisible();
+    await expect(panel.getByRole('article', { name: 'Resultado de la investigación' })).toHaveCount(0);
+    await expect(panel.getByRole('button', { name: 'Reintentar' })).toBeVisible();
+  });
+}
+
+test('límites de la API: rate limit y presupuesto diario al crear', async ({ panel }) => {
+  const [claim] = (await claimsOf('DEMOvideo01')).filter((c) => c.checkability === 'CHECKABLE');
+  for (const [code, title] of [
+    ['rate_limited', 'Límite de uso alcanzado'],
+    ['budget_exceeded', 'Límite diario de investigaciones alcanzado'],
+  ]) {
+    await panel.route(`${API}/v1/investigations`, (route) =>
+      route.fulfill({ status: 429, json: { error: { code, message: 'limit' } } }),
+    );
+    await panel.getByRole('button', { name: `Investigar: ${claim!.literal}` }).click();
+    await expect(panel.getByRole('heading', { name: title })).toBeVisible();
+    await panel.getByRole('button', { name: '← Volver' }).click();
+    await panel.unroute(`${API}/v1/investigations`);
+  }
+});
+
+test('doble clic en Investigar: una sola investigación', async ({ panel }) => {
+  const claims = (await claimsOf('DEMOvideo01')).filter((c) => c.checkability === 'CHECKABLE');
+  const claim = claims[claims.length - 1]!;
+  const ids: string[] = [];
+  panel.on('response', async (r) => {
+    if (r.request().method() === 'POST' && r.url().endsWith('/v1/investigations'))
+      ids.push(((await r.json()) as { id: string }).id);
+  });
+  await panel.getByRole('button', { name: `Investigar: ${claim.literal}` }).dblclick();
+  await expect(panel.getByRole('article', { name: 'Resultado de la investigación' })).toBeVisible({
+    timeout: 15_000,
+  });
+  expect(ids.length).toBeGreaterThanOrEqual(1);
+  expect(new Set(ids).size).toBe(1);
+});
+
+test('varias pestañas: cada panel sigue su pestaña sin mezclar vídeos', async ({ context, panel }) => {
+  const [one, two] = [await claimsOf('DEMOvideo01'), await claimsOf('DEMOvideo02')];
+  const other = await context.newPage();
+  await other.goto('https://www.youtube.com/watch?v=DEMOvideo02');
+  await other.bringToFront();
+  await navigateSpa(other, 'dQw4w9WgXcQ');
+  // El panel vinculado a la primera pestaña no cambia por lo que ocurra en la segunda.
+  await expect(panel.getByText(one[0]!.literal)).toBeVisible();
+  for (const c of two) await expect(panel.getByText(c.literal)).toHaveCount(0);
+  await expect(panel.getByRole('heading', { name: 'Vídeo todavía no compatible' })).toHaveCount(0);
+});
+
+test('cobertura y límites: se consulta sin perder la vista actual', async ({ panel }) => {
+  await expect(panel.getByRole('heading', { name: 'Análisis disponible' })).toBeVisible();
+  await panel.getByRole('button', { name: 'Cobertura y límites' }).click();
+  const coverage = panel.getByRole('region', { name: 'Cobertura y límites' });
+  await expect(coverage.getByText(/no significa que la afirmación sea falsa/)).toBeVisible();
+  await coverage.getByRole('button', { name: '← Volver' }).click();
+  await expect(panel.getByRole('heading', { name: 'Análisis disponible' })).toBeVisible();
 });
