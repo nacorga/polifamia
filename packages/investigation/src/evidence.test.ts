@@ -362,6 +362,33 @@ describe('RealInvestigator', () => {
     expect(llm.calls[0]?.promptVersion).toBe(EXTRACTION_PROMPT_VERSION);
   });
 
+  it('manual: opinión clasificada por el extractor → not_checkable, sin investigar', async () => {
+    const literal = 'Esta política fiscal es injusta para las familias.';
+    const { inv } = investigator({
+      normalize: () => ({
+        claims: [
+          {
+            literal,
+            claimType: 'opinion',
+            metric: null,
+            entity: null,
+            territory: null,
+            period: null,
+            unit: null,
+            value: null,
+            comparison: null,
+            declaredSource: null,
+          },
+        ],
+      }),
+    });
+    const out = inv.investigate(
+      { kind: 'manual', literal, context: null, normalized: {}, declaredSource: null },
+      LIMITS,
+    );
+    await expect(out).rejects.toMatchObject({ reason: 'not_checkable' });
+  });
+
   it('límite de llamadas LLM → budget_exceeded', async () => {
     const { inv } = investigator({ verify: verifyAll('supports') });
     const out = inv.investigate(

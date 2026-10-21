@@ -21,24 +21,24 @@ en verde (S3: también `pnpm e2e`), tareas marcadas `[x]`, notas en `docs/gates.
 
 ### Foundational
 
-- [ ] T001 [P] `packages/contracts/src/enums.ts`: `EventName` += `selection_investigated`; `FailureReason` += `not_checkable`; `ErrorCode` += `not_checkable`
-- [ ] T002 `packages/contracts/src/api.ts`: `origin: z.literal('web_selection').optional()` en el miembro `manualClaim` de `CreateInvestigation`; tests en `packages/contracts/src/api.test.ts` (acepta `origin`, rechaza `url`/`title`/otro `origin`, acepta el evento nuevo)
-- [ ] T003 `apps/api/src/db/schema.ts`: columna nullable `manualOrigin` (`manual_origin`, enum `['web_selection']`); `pnpm --filter @polifamia/api db:generate` → `apps/api/drizzle/0001_*.sql` (enums + columna), sin drift
+- [x] T001 [P] `packages/contracts/src/enums.ts`: `EventName` += `selection_investigated`; `FailureReason` += `not_checkable`; `ErrorCode` += `not_checkable`
+- [x] T002 `packages/contracts/src/api.ts`: `origin: z.literal('web_selection').optional()` en el miembro `manualClaim` de `CreateInvestigation`; tests en `packages/contracts/src/api.test.ts` (acepta `origin`, rechaza `url`/`title`/otro `origin`, acepta el evento nuevo)
+- [x] T003 `apps/api/src/db/schema.ts`: columna nullable `manualOrigin` (`manual_origin`, enum `['web_selection']`); `pnpm --filter @polifamia/api db:generate` → `apps/api/drizzle/0001_*.sql` (enums + columna), sin drift
 
 ### US2 — Mismo motor y caché compartida (P1)
 
-- [ ] T004 [US2] `apps/api/src/modules/investigations/investigations.service.ts`: en la rama de texto libre, buscar afirmación del catálogo con `normalizeText` igual (import de `@polifamia/investigation`) y, si existe, seguir la ruta `claimId`; recorrido lineal con comentario `ponytail:`; guardar `manualOrigin` cuando no hay coincidencia
-- [ ] T005 [US2] Tests de integración en `apps/api/test/api.test.ts`: texto = literal DEMO con mayúsculas/puntuación distintas → misma investigación que `{claimId}` (SC-004); mismo texto pegado y con `origin` → mismo id (SC-005; el medio nunca llega al servicio, así que la invariancia por medio es por construcción); `origin` persistido en `manual_origin`; body con `url` → 400
+- [x] T004 [US2] `apps/api/src/modules/investigations/investigations.service.ts`: en la rama de texto libre, buscar afirmación del catálogo con `normalizeText` igual (import de `@polifamia/investigation`) y, si existe, seguir la ruta `claimId`; recorrido lineal con comentario `ponytail:`; guardar `manualOrigin` cuando no hay coincidencia
+- [x] T005 [US2] Tests de integración en `apps/api/test/api.test.ts`: texto = literal DEMO con mayúsculas/puntuación distintas → misma investigación que `{claimId}` (SC-004); mismo texto pegado y con `origin` → mismo id (SC-005; el medio nunca llega al servicio, así que la invariancia por medio es por construcción); `origin` persistido en `manual_origin`; body con `url` → 400
 
 ### US3 — No verificable (P2)
 
-- [ ] T006 [US3] `investigations.service.ts`: `checkability ≠ CHECKABLE` (directa o resuelta) → `400 not_checkable` en vez de `validation`; ajustar el test existente de opiniones en `apps/api/test/api.test.ts` y añadir texto libre = opinión DEMO de `corpus/videos/demo-02.claims.json` → 400 `not_checkable`
-- [ ] T007 [P] [US3] `packages/investigation/src/real.ts`: si el extractor clasifica el texto libre como no verificable → `InvestigationFailure('not_checkable')`; test en `packages/investigation/src/evidence.test.ts` con extractor falso que devuelve `opinion`; comprobar que el worker lo persiste como `FAILED/not_checkable` sin caché
-- [ ] T008 [US1] Evento `selection_investigated` aceptado por `POST /v1/events` (test en `apps/api/test/api.test.ts`)
+- [x] T006 [US3] `investigations.service.ts`: `checkability ≠ CHECKABLE` (directa o resuelta) → `400 not_checkable` en vez de `validation`; ajustar el test existente de opiniones en `apps/api/test/api.test.ts` y añadir texto libre = opinión DEMO de `corpus/videos/demo-02.claims.json` → 400 `not_checkable`
+- [x] T007 [P] [US3] `packages/investigation/src/real.ts`: si el extractor clasifica el texto libre como no verificable → `InvestigationFailure('not_checkable')`; test en `packages/investigation/src/evidence.test.ts` con extractor falso que devuelve `opinion`; comprobar que el worker lo persiste como `FAILED/not_checkable` sin caché
+- [x] T008 [US1] Evento `selection_investigated` aceptado por `POST /v1/events` (test en `apps/api/test/api.test.ts`)
 
 ### Validación S1
 
-- [ ] T009 `docs/gates.md`: sección «G5 — Selección web (002)» con evidencia S1; revisar que `GET /openapi.json` refleja `origin`
+- [x] T009 `docs/gates.md`: sección «G5 — Selección web (002)» con evidencia S1; revisar que `GET /openapi.json` refleja `origin`
 
 **Checkpoint**: el backend acepta selecciones, comparte caché con vídeo y rechaza opiniones conocidas.
 

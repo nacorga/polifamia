@@ -34,8 +34,22 @@ describe('contracts', () => {
     expect(p('x'.repeat(501)).success).toBe(false);
   });
 
+  it('accepts a web selection origin but never page data', () => {
+    const p = (extra: object) =>
+      CreateInvestigation.safeParse({
+        manualClaim: 'El paro bajó un 5 % en 2024',
+        idempotencyKey: 'abcdefgh',
+        ...extra,
+      }).success;
+    expect(p({ origin: 'web_selection' })).toBe(true);
+    expect(p({ origin: 'other' })).toBe(false);
+    expect(p({ origin: 'web_selection', url: 'https://diario.example/a' })).toBe(false);
+    expect(p({ origin: 'web_selection', title: 'Titular' })).toBe(false);
+  });
+
   it('rejects unknown event names and extra fields', () => {
     expect(CreateEvent.safeParse({ name: 'panel_opened' }).success).toBe(true);
+    expect(CreateEvent.safeParse({ name: 'selection_investigated' }).success).toBe(true);
     expect(CreateEvent.safeParse({ name: 'page_viewed' }).success).toBe(false);
     expect(CreateEvent.safeParse({ name: 'panel_opened', url: 'https://x' }).success).toBe(false);
   });

@@ -175,6 +175,27 @@ Evidencia (2026-10-21):
   5 POST más → `202 202 202 429 429`; 7 GET de polling → todos 200; OpenAPI con 7 rutas; schedule
   `retention-purge | 17 3 * * * | UTC` registrado; logs de worker con `stage` y `correlationId`.
 
+## G5 — Selección web (002) · EN CURSO
+
+Spec `specs/002-web-claim-investigation/`. Solo se envía el texto (con `origin: "web_selection"`); medio, dirección y
+título quedan en el panel.
+
+### Backend (S1) · GO técnico
+
+Evidencia (2026-10-21):
+
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build && pnpm format:check` en verde. Tests: contracts 7,
+  connectors 26, extensión 12, investigation 60, evaluation 7, API integración 23 (PostgreSQL real), importador 12.
+- Migración `0001_web_selection` (`event_name += selection_investigated`, `failure_reason += not_checkable`, columna
+  `investigations.manual_origin`); `db:generate` sin drift.
+- Integración API cubre: texto libre igual (normalizado) a un claim del catálogo → misma investigación que `{claimId}`,
+  respuesta 200 desde caché (SC-004); pegado y seleccionado → misma investigación (SC-005); `manual_origin` guardado y
+  no serializado; `url` en el body → 400; opinión del catálogo (por `claimId` o por texto) → 400 `not_checkable`;
+  opinión clasificada por el motor → `FAILED/not_checkable`, no reutilizada; evento `selection_investigated` → 204.
+- Motor real: el extractor que clasifica el texto libre como opinión/predicción corta con `not_checkable` (unit test).
+  Cambia también el texto pegado de 001 en modo real (antes se investigaba como hecho; constitución II).
+- Límite conocido: en DEMO, una opinión sin coincidencia en el catálogo no se detecta.
+
 ## Definition of Done (PRD §14)
 
 | # | Criterio | Estado | Evidencia / pendiente |
