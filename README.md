@@ -1,5 +1,10 @@
 # Polifamia
 
+> **English:** Polifamia is a Chrome extension that lets you investigate claims in Spanish political speeches on
+> YouTube against primary sources (INE, BOE, fact-checks) without leaving the video. Conclusions are decided by
+> deterministic code, never by the LLM, and every result shows its evidence and its limits. Early MVP, not yet
+> distributed. Docs are in Spanish; issues and PRs in English are welcome. Licensed under AGPL-3.0-or-later.
+
 Extensión de Chrome que permite investigar afirmaciones de discursos políticos en YouTube con evidencia
 verificable, sin salir del vídeo. **No le decimos al usuario qué pensar**: mostramos qué se afirmó, qué fuentes
 hay, qué prueban y qué queda sin probar.
@@ -58,6 +63,7 @@ Guía completa: [`specs/001-youtube-claim-investigation/quickstart.md`](specs/00
 
 - Producto: [`prd.md`](prd.md) · Spec-kit: [`specs/001-youtube-claim-investigation/`](specs/001-youtube-claim-investigation/)
 - Gates y Definition of Done: [`docs/gates.md`](docs/gates.md) · Viabilidad D0: [`docs/d0-viability.md`](docs/d0-viability.md)
+- Gobernanza y neutralidad: [`docs/governance.md`](docs/governance.md)
 - Privacidad: [`docs/privacy.md`](docs/privacy.md) · Release/rollback: [`docs/release.md`](docs/release.md) · ADRs: [`docs/adr/`](docs/adr/)
 
 ## Estado de gates
@@ -70,3 +76,13 @@ Guía completa: [`specs/001-youtube-claim-investigation/quickstart.md`](specs/00
 | G3 evidencias | ITERAR: falta eval con clave, fixture real de Fact Check y auditoría humana |
 | G4 beta técnica | GO técnico local; no distribuir hasta cerrar G0–G3 y privacidad |
 | V1–V3 | No iniciados |
+
+## Contribuir
+
+Lee [`CONTRIBUTING.md`](CONTRIBUTING.md) y el [Código de Conducta](CODE_OF_CONDUCT.md). Para errores en un resultado,
+usa la plantilla «Resultado incorrecto»; las vulnerabilidades se reportan en privado ([`SECURITY.md`](SECURITY.md)).
+
+## Licencia
+
+Código bajo [AGPL-3.0-or-later](LICENSE): si ofreces una versión modificada como servicio, debes publicar sus cambios.
+Datos y fixtures según [`DATA-LICENSE.md`](DATA-LICENSE.md).

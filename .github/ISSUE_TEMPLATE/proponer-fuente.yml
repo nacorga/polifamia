@@ -1,0 +1,33 @@
+name: Proponer fuente
+description: Sugerir una fuente primaria o una serie nueva para las investigaciones.
+labels: [fuente]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Solo se aceptan fuentes que cumplan los criterios de [docs/governance.md](https://github.com/nacorga/polifamia/blob/main/docs/governance.md#criterios-para-añadir-una-fuente).
+  - type: input
+    id: source
+    attributes:
+      label: Organismo y recurso
+      placeholder: 'INE · serie EPA452434 (tasa de paro)'
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: URL del dato o de la API
+    validations:
+      required: true
+  - type: input
+    id: terms
+    attributes:
+      label: Condiciones de reutilización (URL)
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Qué afirmaciones permitiría investigar
+    validations:
+      required: true
