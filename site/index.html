@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Polifamia — beta cerrada</title>
+    <meta
+      name="description"
+      content="Extensión para Chrome que investiga afirmaciones de artículos y vídeos de YouTube con fuentes verificables. Beta cerrada próximamente."
+    />
+    <meta name="color-scheme" content="light dark" />
+    <!-- Tokens copiados de apps/extension/entrypoints/sidepanel/style.css -->
+    <style>
+      :root {
+        --ink: #1c1f24;
+        --muted: #5b6270;
+        --line: #dfe2e7;
+        --paper: #ffffff;
+        --wash: #f4f5f7;
+        --accent: #1f5fbf;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --ink: #e8eaee;
+          --muted: #a3aab6;
+          --line: #353a43;
+          --paper: #17191d;
+          --wash: #20232a;
+          --accent: #7fb0ff;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font:
+          17px/1.6 system-ui,
+          -apple-system,
+          'Segoe UI',
+          sans-serif;
+      }
+      .wrap {
+        max-width: 40rem;
+        margin: 0 auto;
+        padding: 0 1rem;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 1.5rem 0;
+      }
+      .brand {
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+      .pill {
+        font-size: 0.8rem;
+        color: var(--accent);
+        border: 1px solid currentColor;
+        border-radius: 999px;
+        padding: 0.15rem 0.7rem;
+        white-space: nowrap;
+      }
+      main {
+        flex: 1;
+        padding: 4rem 0;
+      }
+      h1 {
+        font-size: clamp(2rem, 6vw, 2.75rem);
+        line-height: 1.15;
+        letter-spacing: -0.02em;
+        margin: 0 0 1.25rem;
+      }
+      .lead {
+        color: var(--muted);
+        font-size: 1.15rem;
+        margin: 0 0 3rem;
+      }
+      ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        border-top: 1px solid var(--line);
+      }
+      li {
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--line);
+      }
+      li strong {
+        display: block;
+      }
+      li span {
+        color: var(--muted);
+      }
+      footer {
+        padding: 1.5rem 0;
+        font-size: 0.875rem;
+        color: var(--muted);
+      }
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <span class="brand">Polifamia</span>
+        <span class="pill">Beta cerrada · próximamente</span>
+      </header>
+      <main>
+        <h1>Investiga una afirmación sin salir de la página</h1>
+        <p class="lead">
+          Selecciona una frase en un artículo o en un vídeo de YouTube. Polifamia te muestra qué se ha
+          afirmado, qué fuentes encontramos, qué prueban realmente y qué incertidumbres quedan.
+        </p>
+        <ul>
+          <li>
+            <strong>Solo actúa cuando la invocas</strong>
+            <span>Nada se analiza hasta que eliges «Investigar esta afirmación».</span>
+          </li>
+          <li>
+            <strong>Fuentes originales, no veredictos</strong>
+            <span>Te enlazamos los documentos y explicamos qué dicen; la conclusión es tuya.</span>
+          </li>
+          <li>
+            <strong>Sin cuenta ni publicidad personalizada</strong>
+            <span>Solo enviamos lo imprescindible para investigar.</span>
+          </li>
+        </ul>
+      </main>
+      <footer>
+        Extensión para Chrome en beta cerrada. Empezamos por la política y la economía españolas.
+      </footer>
+    </div>
+  </body>
+</html>

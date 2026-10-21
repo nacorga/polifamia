@@ -12,6 +12,12 @@ Plantilla de despliegue: `infra/digitalocean-app.yaml` (API + worker + PostgreSQ
    el build falla si el bundle contiene secretos o permisos fuera de lo esperado (`scripts/check-bundle.mjs`).
    Distribución beta cerrada: carga descomprimida o Chrome Web Store como «no listada» tras revisión.
 
+## Landing (Vercel)
+
+`site/index.html`: estática, sin JS ni recogida de datos. Proyecto Vercel: importar `nacorga/polifamia`, **Root
+Directory `site`**, Framework Preset «Other», build e install vacíos. Sin Vercel Analytics ni Speed Insights (datos
+mínimos). **No publicada.**
+
 ## Rollback
 
 - **API/worker**: App Platform → «Rollback» al despliegue anterior. Los jobs en curso se reintentan (pg-boss).

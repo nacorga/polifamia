@@ -266,7 +266,7 @@ infra/
   github-actions-notes.md
 ```
 
-No añadir una web de marketing, dashboard de operadores, app móvil, login ni estructura multitenant a este monorepo durante P0. El CLI de ingesta basta para gestionar el catálogo beta.
+No añadir una web de marketing, dashboard de operadores, app móvil, login ni estructura multitenant a este monorepo durante P0. El CLI de ingesta basta para gestionar el catálogo beta. Excepción: se admite una única página estática de anuncio (`site/index.html`, sin JS, formularios ni recogida de datos).
 
 ### 10.4 Servicios, modelos y estrategia LLM
 

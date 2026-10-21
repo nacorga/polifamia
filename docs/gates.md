@@ -272,4 +272,5 @@ usuarios hasta cerrar:
 - [ ] **Privacidad/CWS** — responsable, contacto, DPA con proveedores, retención de texto manual.
 - [ ] **Prueba manual** en Chrome estable sobre youtube.com real.
 - [ ] **Despliegue** — aprobar coste y crear la app en DigitalOcean (`infra/digitalocean-app.yaml`).
+- [ ] **Landing** — `site/index.html` preparada, **no publicada**; publicar en Vercel es decisión humana (`docs/release.md`).
 - [ ] **V1–V3** — usabilidad moderada, beta cerrada instrumentada, validación comercial (PRD §13).
