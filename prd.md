@@ -4,6 +4,11 @@
 **Nombre de trabajo:** Por definir  
 **Producto:** Extensión de Chrome que permite investigar afirmaciones de discursos políticos con evidencia verificable, sin abandonar YouTube.
 
+> **Evolución de producto (v1.2, 21/10/2026):** el producto pasa a ser una extensión para investigar las afirmaciones
+> que encuentras mientras navegas (artículos, noticias y vídeos), con la política como primer ámbito. YouTube pasa a ser
+> uno de los canales de entrada; la entrada principal es seleccionar una frase y elegir «Investigar esta afirmación».
+> Ver `specs/002-web-claim-investigation/spec.md` y la constitución v1.1.0. Este PRD sigue siendo la fuente del MVP 001.
+
 > **Principio de producto:** No le decimos al usuario qué pensar sobre un político. Le mostramos qué se ha afirmado, qué fuentes encontramos, qué prueban realmente y qué incertidumbres permanecen.
 
 ## 1. Resumen ejecutivo

@@ -4,6 +4,7 @@ Spec-driven (github/spec-kit). Antes de cambiar código lee:
 
 - `.specify/memory/constitution.md` — principios no negociables.
 - `specs/001-youtube-claim-investigation/` — spec, plan, research, data-model, contracts, tasks.
+- `specs/002-web-claim-investigation/` — ampliación a artículos por selección (spec; plan y tasks pendientes).
 - `prd.md` — PRD de producto (fuente original).
 
 Reglas de trabajo:
