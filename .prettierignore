@@ -1,0 +1,7 @@
+dist
+pnpm-lock.yaml
+apps/api/drizzle
+.specify
+*.md
+.claude
+corpus

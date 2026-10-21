@@ -1,0 +1,49 @@
+[
+  {
+    "literal": "la tasa de paro en España bajó del 12 % en el tercer trimestre de 2024",
+    "claimType": "statistic",
+    "normalized": { "metric": "tasa de paro", "territory": "España", "period": "2024T3", "unit": "%", "value": 12, "comparison": "por debajo de" },
+    "declaredSource": "Encuesta de Población Activa (INE)",
+    "speaker": "Ponente A (ficticio)",
+    "rank": 1
+  },
+  {
+    "literal": "El salario mínimo interprofesional se sitúa en 1.134 euros al mes en catorce pagas.",
+    "claimType": "statistic",
+    "normalized": { "metric": "salario mínimo interprofesional", "territory": "España", "unit": "euros/mes (14 pagas)", "value": 1134 },
+    "speaker": "Ponente A (ficticio)",
+    "rank": 2
+  },
+  {
+    "literal": "la afiliación a la Seguridad Social superó los 21 millones de personas",
+    "claimType": "statistic",
+    "normalized": { "metric": "afiliación a la Seguridad Social", "territory": "España", "unit": "personas", "value": 21000000, "comparison": "por encima de" },
+    "speaker": "Ponente A (ficticio)",
+    "rank": 3
+  },
+  {
+    "literal": "La inflación interanual cerró 2023 en el 3,1 %.",
+    "claimType": "statistic",
+    "normalized": { "metric": "IPC variación interanual", "territory": "España", "period": "2023-12", "unit": "%", "value": 3.1 },
+    "speaker": "Ponente A (ficticio)",
+    "rank": 4
+  },
+  {
+    "literal": "este es el mejor gobierno de nuestra historia",
+    "claimType": "opinion",
+    "speaker": "Ponente A (ficticio)",
+    "rank": 5
+  },
+  {
+    "literal": "El año que viene crearemos medio millón de empleos",
+    "claimType": "prediction",
+    "speaker": "Ponente A (ficticio)",
+    "rank": 6
+  },
+  {
+    "literal": "Nuestros rivales no tienen ni idea de economía.",
+    "claimType": "opinion",
+    "speaker": "Ponente A (ficticio)",
+    "rank": 7
+  }
+]

@@ -1,0 +1,11 @@
+{
+  "youtubeId": "DEMOvideo02",
+  "title": "[DEMO] Intervención ficticia sobre presupuestos",
+  "channel": "DEMO",
+  "language": "es",
+  "holder": "Equipo Polifamia (texto redactado para pruebas)",
+  "basis": "demo-fixture",
+  "scope": "Solo desarrollo y pruebas automatizadas; no corresponde a ningún vídeo real ni orador real.",
+  "notes": "Las cifras son ilustrativas y no deben citarse como datos verificados.",
+  "importedBy": "dev"
+}

@@ -1,0 +1,17 @@
+{
+  "name": "@polifamia/import-transcripts",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run",
+    "start": "tsc -b && node --env-file-if-exists=../../.env dist/cli.js"
+  },
+  "dependencies": {
+    "@polifamia/api": "workspace:*",
+    "@polifamia/contracts": "workspace:*",
+    "drizzle-orm": "0.45.4",
+    "zod": "4.6.7"
+  }
+}

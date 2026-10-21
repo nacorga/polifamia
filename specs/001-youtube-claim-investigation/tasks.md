@@ -20,48 +20,48 @@ en verde, tareas marcadas `[x]`, notas de gate en `docs/gates.md`, commit en `00
 
 ### Setup
 
-- [ ] T001 Monorepo pnpm: `package.json` raíz (scripts typecheck/lint/test/build/e2e/dev:*), `pnpm-workspace.yaml`, `tsconfig.base.json` estricto, ESLint flat config + Prettier, `.gitignore`, `.nvmrc` (22), `.env.example`
-- [ ] T002 [P] `infra/docker-compose.yml` con PostgreSQL 16 (bd `polifamia` y `polifamia_test`)
-- [ ] T003 [P] `.github/workflows/ci.yml`: install, typecheck, lint, test (servicio postgres), build, validación de migraciones
+- [x] T001 Monorepo pnpm: `package.json` raíz (scripts typecheck/lint/test/build/e2e/dev:*), `pnpm-workspace.yaml`, `tsconfig.base.json` estricto, ESLint flat config + Prettier, `.gitignore`, `.nvmrc` (22), `.env.example`
+- [x] T002 [P] `infra/docker-compose.yml` con PostgreSQL 16 (bd `polifamia` y `polifamia_test`)
+- [x] T003 [P] `.github/workflows/ci.yml`: install, typecheck, lint, test (servicio postgres), build, validación de migraciones
 
 ### Foundational
 
-- [ ] T004 `packages/contracts`: enums (estados UX, conclusiones, job status, claim types, provenance, feedback reasons, event names), schemas Zod de `contracts/api.md`, errores, `messages.ts`
-- [ ] T005 [P] Tests de schemas en `packages/contracts/src/*.test.ts`
-- [ ] T006 `apps/api/src/db/schema.ts` según `data-model.md` + `drizzle.config.ts` + primera migración en `apps/api/drizzle/`
-- [ ] T007 NestJS bootstrap `apps/api/src/main.ts`: pipe de validación Zod, filtro de errores `{error:{code,message}}`, logger pino JSON con `correlationId`, CORS limitado a `chrome-extension://*`, límite de body
-- [ ] T008 [P] `GET /health` y `GET /openapi.json` generado desde contracts
-- [ ] T009 Config tipada (Zod sobre `process.env`): DB, modo demo/real, límites por job, presupuesto diario, rate limit
+- [x] T004 `packages/contracts`: enums (estados UX, conclusiones, job status, claim types, provenance, feedback reasons, event names), schemas Zod de `contracts/api.md`, errores, `messages.ts`
+- [x] T005 [P] Tests de schemas en `packages/contracts/src/*.test.ts`
+- [x] T006 `apps/api/src/db/schema.ts` según `data-model.md` + `drizzle.config.ts` + primera migración en `apps/api/drizzle/`
+- [x] T007 NestJS bootstrap `apps/api/src/main.ts`: pipe de validación Zod, filtro de errores `{error:{code,message}}`, logger pino JSON con `correlationId`, CORS limitado a `chrome-extension://*`, límite de body
+- [x] T008 [P] `GET /health` y `GET /openapi.json` generado desde contracts
+- [x] T009 Config tipada (Zod sobre `process.env`): DB, modo demo/real, límites por job, presupuesto diario, rate limit
 
 ### US5 — Importación autorizada (P1)
 
-- [ ] T010 [P] [US5] Parser SRT/VTT con tests (timestamps, multilínea, BOM, cues inválidos) en `scripts/import-transcripts/src/parse.ts`
-- [ ] T011 [US5] Schema `rights.json` (holder, basis, scope, language, youtubeId, url, importedBy) y CLI `pnpm import:transcripts <dir>`: valida, calcula `revision_hash`, upsert idempotente de vídeo + transcripción
-- [ ] T012 [US5] Carga de claims curadas `*.claims.json` (literal debe ser subcadena de la transcripción y caer en el tramo temporal; si no → rechazo) marcando `extractor: "fixture"`
-- [ ] T013 [P] [US5] Corpus DEMO: 2 vídeos en `corpus/videos/` (transcripción redactada por el equipo, `basis: "demo-fixture"`, claims DEMO de economía/empleo, incl. una opinión y una predicción)
+- [x] T010 [P] [US5] Parser SRT/VTT con tests (timestamps, multilínea, BOM, cues inválidos) en `scripts/import-transcripts/src/parse.ts`
+- [x] T011 [US5] Schema `rights.json` (holder, basis, scope, language, youtubeId, url, importedBy) y CLI `pnpm import:transcripts <dir>`: valida, calcula `revision_hash`, upsert idempotente de vídeo + transcripción
+- [x] T012 [US5] Carga de claims curadas `*.claims.json` (literal debe ser subcadena de la transcripción y caer en el tramo temporal; si no → rechazo) marcando `extractor: "fixture"`
+- [x] T013 [P] [US5] Corpus DEMO: 2 vídeos en `corpus/videos/` (transcripción redactada por el equipo, `basis: "demo-fixture"`, claims DEMO de economía/empleo, incl. una opinión y una predicción)
 
 ### US1 — API de catálogo (P1)
 
-- [ ] T014 [US1] `GET /v1/videos/:videoId/availability` (unsupported_video si no está)
-- [ ] T015 [US1] `GET /v1/videos/:videoId/claims` ordenado por rank, solo CHECKABLE + marcado de no verificables
+- [x] T014 [US1] `GET /v1/videos/:videoId/availability` (unsupported_video si no está)
+- [x] T015 [US1] `GET /v1/videos/:videoId/claims` ordenado por rank, solo CHECKABLE + marcado de no verificables
 
 ### US2 — Investigaciones con worker DEMO (P1)
 
-- [ ] T016 [US2] `packages/investigation`: `cacheKey()` con tests; interfaz `Investigator`; `DemoInvestigator` que devuelve resultado claramente DEMO con evidencia ficticia marcada
-- [ ] T017 [US2] `POST /v1/investigations`: idempotencyKey único, reutiliza caché válida (200), si no crea PENDING y encola en pg-boss con `singletonKey=cacheKey` (202)
-- [ ] T018 [US2] `GET /v1/investigations/:id` con evidencias y fuentes
-- [ ] T019 [US2] Worker `apps/api/src/worker/main.ts`: consume, RUNNING → resultado, persiste versión, coste, latencia, timeout por job y estados FAILED con motivo
-- [ ] T020 [P] [US3] Soporte `manualClaim` (10..500 chars), sin timestamp, `claim.kind="manual"`
+- [x] T016 [US2] `packages/investigation`: `cacheKey()` con tests; interfaz `Investigator`; `DemoInvestigator` que devuelve resultado claramente DEMO con evidencia ficticia marcada
+- [x] T017 [US2] `POST /v1/investigations`: idempotencyKey único, reutiliza caché válida (200), si no crea PENDING y encola en pg-boss con `singletonKey=cacheKey` (202)
+- [x] T018 [US2] `GET /v1/investigations/:id` con evidencias y fuentes
+- [x] T019 [US2] Worker `apps/api/src/worker/main.ts`: consume, RUNNING → resultado, persiste versión, coste, latencia, timeout por job y estados FAILED con motivo
+- [x] T020 [P] [US3] Soporte `manualClaim` (10..500 chars), sin timestamp, `claim.kind="manual"`
 
 ### US4 — Feedback y eventos (P2)
 
-- [ ] T021 [P] [US4] `POST /v1/investigations/:id/feedback` (no altera la investigación)
-- [ ] T022 [P] `POST /v1/events` (FR-017), sin datos personales salvo `installId`
+- [x] T021 [P] [US4] `POST /v1/investigations/:id/feedback` (no altera la investigación)
+- [x] T022 [P] `POST /v1/events` (FR-017), sin datos personales salvo `installId`
 
 ### Validación S1
 
-- [ ] T023 Tests de integración API (`apps/api/test/`) contra `polifamia_test`: availability, claims, idempotencia, deduplicación concurrente, caché, manual, feedback, errores 404/400
-- [ ] T024 `docs/gates.md` con notas G1 (backend) y actualización de `quickstart.md`
+- [x] T023 Tests de integración API (`apps/api/test/`) contra `polifamia_test`: availability, claims, idempotencia, deduplicación concurrente, caché, manual, feedback, errores 404/400
+- [x] T024 `docs/gates.md` con notas G1 (backend) y actualización de `quickstart.md`
 
 **Checkpoint**: backend D1 operativo en modo DEMO con datos del corpus.
 
