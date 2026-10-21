@@ -73,13 +73,13 @@ en verde (S3: también `pnpm e2e`), tareas marcadas `[x]`, notas en `docs/gates.
 
 ## Phase 3 — S3: E2E + documentación
 
-- [ ] T019 [P] `apps/extension/e2e/fixtures/article.html`: artículo marcado DEMO con «La inflación interanual cerró 2023 en el 3,1 %.» (demo-01) y la opinión de demo-02; ruta `https://diario.example/**` en el fixture `context` de `apps/extension/e2e/extension.spec.ts`
-- [ ] T020 [US1] E2E: selección escrita vía `sw.evaluate` con `selectionFromClick` sobre `https://diario.example/2026/10/articulo-demo?utm_source=x#p3` → el panel muestra texto, `diario.example` y la ruta sin `?`/`#`; 0 POST antes de confirmar; body = `manualClaim`, `origin`, `idempotencyKey` sin dominio/URL/título (SC-006); resultado DEMO con «texto seleccionado por ti en diario.example» y sin minuto; el formulario «Hay un problema con esta investigación» está disponible (FR-017)
-- [ ] T021 [US2] E2E: investigar la afirmación en el vídeo DEMO y después la misma frase seleccionada → mismo id, respuesta 200 (SC-004)
-- [ ] T022 [US3] E2E: editar/recortar la selección; texto demasiado corto deshabilita el envío; la opinión DEMO → aviso no verificable
-- [ ] T023 [US4] E2E: pestaña de artículo sin selección → guía + pegar; reescribir el test «panel solo habilitado en YouTube» (panel habilitado en todas, URL de la otra pestaña sigue invisible); SC-002: navegar sin invocar → `storage.session` vacío y 0 peticiones al servicio
-- [ ] T024 [P] `docs/privacy.md`: permisos nuevos, qué se envía (solo texto), qué queda local, evento nuevo
-- [ ] T025 `docs/gates.md` G5: evidencia S3 (E2E), pendientes humanos (revisión legal de la ampliación, SC-008 validación con usuarios, justificación de `contextMenus`/`activeTab` para Chrome Web Store, prueba manual del quickstart; umbrales de calidad de 001 para afirmaciones de artículos (SC-007) cubiertos por el mismo motor, auditoría G2/G3 pendiente)
+- [x] T019 [P] `apps/extension/e2e/fixtures/article.html`: artículo marcado DEMO con «La inflación interanual cerró 2023 en el 3,1 %.» (demo-01) y la opinión de demo-02; ruta `https://diario.example/**` en el fixture `context` de `apps/extension/e2e/extension.spec.ts`
+- [x] T020 [US1] E2E: selección escrita vía `sw.evaluate` con `selectionFromClick` sobre `https://diario.example/2026/10/articulo-demo?utm_source=x#p3` → el panel muestra texto, `diario.example` y la ruta sin `?`/`#`; 0 POST antes de confirmar; body = `manualClaim`, `origin`, `idempotencyKey` sin dominio/URL/título (SC-006); resultado DEMO con «texto seleccionado por ti en diario.example» y sin minuto; el formulario «Hay un problema con esta investigación» está disponible (FR-017)
+- [x] T021 [US2] E2E: investigar la afirmación en el vídeo DEMO y después la misma frase seleccionada → mismo id, respuesta 200 (SC-004)
+- [x] T022 [US3] E2E: editar/recortar la selección; texto demasiado corto deshabilita el envío; la opinión DEMO → aviso no verificable
+- [x] T023 [US4] E2E: pestaña de artículo sin selección → guía + pegar; reescribir el test «panel solo habilitado en YouTube» (panel habilitado en todas, URL de la otra pestaña sigue invisible); SC-002: navegar sin invocar → `storage.session` vacío y 0 peticiones al servicio
+- [x] T024 [P] `docs/privacy.md`: permisos nuevos, qué se envía (solo texto), qué queda local, evento nuevo
+- [x] T025 `docs/gates.md` G5: evidencia S3 (E2E), pendientes humanos (revisión legal de la ampliación, SC-008 validación con usuarios, justificación de `contextMenus`/`activeTab` para Chrome Web Store, prueba manual del quickstart; umbrales de calidad de 001 para afirmaciones de artículos (SC-007) cubiertos por el mismo motor, auditoría G2/G3 pendiente)
 
 **Checkpoint**: Gate G5 técnico — selección web completa en DEMO; gates humanos pendientes.
 
