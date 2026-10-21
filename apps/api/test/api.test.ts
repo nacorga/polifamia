@@ -22,7 +22,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createApp } from '../dist/app.js';
 import { rateLimit } from '../dist/http.js';
 import { loadConfig } from '../dist/config.js';
-import { createDb } from '../dist/db/client.js';
+import { createDb, pgConnection } from '../dist/db/client.js';
 import { runMigrations } from '../dist/db/migrate.js';
 import { claims, events, evidence, investigations, transcripts, videos } from '../dist/db/schema.js';
 import { processInvestigation } from '../dist/worker/process.js';
@@ -602,5 +602,19 @@ describe('platform', () => {
     });
     expect(big.status).toBe(413);
     expect(await big.json()).toMatchObject({ error: { code: 'validation' } });
+  });
+});
+
+describe('pgConnection', () => {
+  it('sin CA deja la URL intacta', () => {
+    expect(pgConnection('postgres://u:p@h:25060/db?sslmode=require', '')).toEqual({
+      connectionString: 'postgres://u:p@h:25060/db?sslmode=require',
+    });
+  });
+  it('con CA verifica contra ella y quita sslmode para que no la sobrescriba', () => {
+    expect(pgConnection('postgres://u:p@h:25060/db?sslmode=require', 'PEM')).toEqual({
+      connectionString: 'postgres://u:p@h:25060/db',
+      ssl: { ca: 'PEM' },
+    });
   });
 });

@@ -1,0 +1,9 @@
+**/node_modules
+**/dist
+**/*.tsbuildinfo
+**/.output
+**/.wxt
+**/test-results
+.git
+.env
+apps/extension

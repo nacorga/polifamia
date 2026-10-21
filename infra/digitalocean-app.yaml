@@ -1,14 +1,20 @@
-# DigitalOcean App Platform — beta cerrada (PRD §10.1). NO desplegado: plantilla para revisión.
-# Crear con `doctl apps create --spec infra/digitalocean-app.yaml` solo tras aprobar coste y gates.
+# DigitalOcean App Platform — beta cerrada (PRD §10.1). Guía: docs/deploy.md.
+# Crear con `doctl apps create --spec infra/digitalocean-app.yaml`; actualizar con `doctl apps update <id> --spec …`.
 # Secretos (ANTHROPIC_API_KEY, FACTCHECK_API_KEY) se introducen en la consola como SECRET; nunca en git.
+# Coste aproximado: API 5 $ + worker 5 $ + PostgreSQL gestionado 15 $ ≈ 25 $/mes (sin contar el LLM).
 name: polifamia-beta
 region: fra
 envs:
   - key: DATABASE_URL
     scope: RUN_AND_BUILD_TIME
     value: ${db.DATABASE_URL}
+  # CA de la BD gestionada: la conexión TLS se verifica contra ella (apps/api/src/db/client.ts).
+  - key: DATABASE_CA_CERT
+    scope: RUN_TIME
+    value: ${db.CA_CERT}
   - key: INVESTIGATION_MODE
     value: real
+  # Tope de gasto LLM por día; al alcanzarlo, las investigaciones nuevas devuelven `budget_exceeded`.
   - key: DAILY_BUDGET_EUR
     value: '5'
   - key: RATE_LIMIT_PER_MINUTE
@@ -22,19 +28,19 @@ databases:
     engine: PG
     version: '16'
     production: true # gestionado, con backups diarios
+# Una sola imagen (Dockerfile) para migraciones, API y worker; cambia el comando.
 jobs:
   # Migraciones Drizzle revisadas antes de cada despliegue; si fallan, el despliegue se detiene.
   - name: migrate
     kind: PRE_DEPLOY
     github: { repo: nacorga/polifamia, branch: main, deploy_on_push: false }
-    environment_slug: node-js
-    build_command: pnpm install --frozen-lockfile && pnpm --filter "@polifamia/api..." run build
+    dockerfile_path: Dockerfile
     run_command: node apps/api/dist/db/migrate.js
+    instance_size_slug: apps-s-1vcpu-0.5gb
 services:
   - name: api
     github: { repo: nacorga/polifamia, branch: main, deploy_on_push: false }
-    environment_slug: node-js
-    build_command: pnpm install --frozen-lockfile && pnpm --filter "@polifamia/api..." run build
+    dockerfile_path: Dockerfile
     run_command: node apps/api/dist/main.js
     http_port: 8080
     instance_count: 1 # rate limit en memoria: una instancia (ver ADR 0004)
@@ -50,8 +56,7 @@ workers:
   # Proceso persistente pg-boss: investigaciones y purga de retención (no serverless, PRD §10.2).
   - name: worker
     github: { repo: nacorga/polifamia, branch: main, deploy_on_push: false }
-    environment_slug: node-js
-    build_command: pnpm install --frozen-lockfile && pnpm --filter "@polifamia/api..." run build
+    dockerfile_path: Dockerfile
     run_command: node apps/api/dist/worker/main.js
     instance_count: 1
     instance_size_slug: apps-s-1vcpu-0.5gb

@@ -36,6 +36,8 @@ jobs:
       - run: pnpm db:migrate
       - run: pnpm test
       - run: pnpm build
+      # Imagen de despliegue (App Platform): migraciones, API y worker.
+      - run: docker build -q -t polifamia-api .
       - run: pnpm --filter @polifamia/extension exec playwright install --with-deps chromium
       - run: pnpm e2e
         env:
