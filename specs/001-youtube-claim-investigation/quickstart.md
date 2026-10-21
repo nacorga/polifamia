@@ -46,6 +46,14 @@ ve el flujo «no compatible» + manual. El flujo completo con reproductor está 
 4. Abrir otro vídeo → «Vídeo todavía no compatible» → **Pegar una afirmación**.
 5. «Hay un problema con esta investigación» → confirmación.
 
+Motor de afirmaciones (S3):
+
+```bash
+pnpm eval:extraction                      # offline-oracle: valida el arnés, no la calidad del modelo
+pnpm eval:extraction -- --real            # requiere ANTHROPIC_API_KEY (coste real)
+pnpm extract:claims <youtubeId>           # extrae y selecciona claims de un vídeo importado sin claims.json
+```
+
 Checks: `pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm build && pnpm e2e`
 (los tests de integración usan `polifamia_test`; `DATABASE_URL_TEST` lo sobrescribe. `pnpm e2e` construye la
 extensión en `.output/chrome-mv3-e2e` apuntando a :3199, recrea `polifamia_e2e`, levanta API + worker DEMO y

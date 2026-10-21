@@ -1,8 +1,6 @@
-export interface Segment {
-  startMs: number;
-  endMs: number;
-  text: string;
-}
+import type { Segment } from '@polifamia/investigation';
+
+export { locateClaim, type LocatedClaim, type Segment } from '@polifamia/investigation';
 
 const TIME = /^(?:(\d{1,2}):)?(\d{2}):(\d{2})[.,](\d{3})$/;
 
@@ -56,40 +54,4 @@ export function parseSubtitles(input: string, format: 'srt' | 'vtt'): Segment[] 
   }
   if (segments.length === 0) throw new Error('no cues found');
   return segments;
-}
-
-export interface LocatedClaim {
-  startMs: number;
-  endMs: number;
-  context: string;
-}
-
-/**
- * Localiza una cita literal en la transcripción. Devuelve null si no es una subcadena exacta
- * (salvo espacios): un claim que no está en la transcripción no se importa.
- */
-export function locateClaim(segments: Segment[], literal: string): LocatedClaim | null {
-  const needle = literal.replace(/\s+/g, ' ').trim();
-  if (!needle) return null;
-  const offsets: number[] = [];
-  let full = '';
-  for (const s of segments) {
-    if (full) full += ' ';
-    offsets.push(full.length);
-    full += s.text;
-  }
-  const at = full.indexOf(needle);
-  if (at === -1) return null;
-  const segAt = (pos: number) => {
-    let idx = 0;
-    for (let k = 0; k < offsets.length; k++) if (offsets[k]! <= pos) idx = k;
-    return idx;
-  };
-  const first = segAt(at);
-  const last = segAt(at + needle.length - 1);
-  const context = segments
-    .slice(Math.max(0, first - 1), last + 2)
-    .map((s) => s.text)
-    .join(' ');
-  return { startMs: segments[first]!.startMs, endMs: segments[last]!.endMs, context };
 }

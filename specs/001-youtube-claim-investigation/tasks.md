@@ -94,17 +94,17 @@ en verde, tareas marcadas `[x]`, notas de gate en `docs/gates.md`, commit en `00
 
 ## Phase 3 — S3: Motor de afirmaciones + evaluación (D2)
 
-- [ ] T043 Interfaz `LlmClient` (structured output → Zod, registro de modelo/promptVersion/tokens/coste) + impl. Anthropic en `packages/investigation/src/llm/`
-- [ ] T044 Segmentación de transcripción en tramos con contexto y solape (`segment.ts`) con tests
-- [ ] T045 `ClaimExtractor` LLM: claims atómicas con literal, contexto, tipo, normalización; rechazo de literales que no sean subcadena del tramo; timestamps desde segmentos
-- [ ] T046 Clasificación statistic/fact/opinion/prediction/uncheckable y checkability
-- [ ] T047 Selección determinista 3–10 (`select.ts`): especificidad (cifra, periodo, territorio), área beta, deduplicación conservadora; sin speaker/partido; tests
-- [ ] T048 Comando `pnpm extract:claims <youtubeId>` que persiste claims (versionadas por transcript) y pasa vídeo a `claims_ready`
-- [ ] T049 [P] `packages/evaluation`: formato JSONL de dataset (claims etiquetadas, tipo, checkable, esperado), seed inicial con negativos, ambiguos, equivalencias y pares de invariancia de orador
-- [ ] T050 Script `pnpm eval:extraction` que reporta precisión/recobrado de extracción, errores de clasificación y de timestamp por separado
-- [ ] T051 Tests de invariancia (misma frase, distinto orador/partido → misma clasificación y rank)
-- [ ] T052 Prompt con delimitación de datos no confiables + test de inyección
-- [ ] T053 `docs/gates.md` G2 (resultado de eval con/ sin clave; pendiente humano: ≥100 ejemplos revisados por 2 personas)
+- [x] T043 Interfaz `LlmClient` (structured output → Zod, registro de modelo/promptVersion/tokens/coste) + impl. Anthropic en `packages/investigation/src/llm/`
+- [x] T044 Segmentación de transcripción en tramos con contexto y solape (`segment.ts`) con tests
+- [x] T045 `ClaimExtractor` LLM: claims atómicas con literal, contexto, tipo, normalización; rechazo de literales que no sean subcadena del tramo; timestamps desde segmentos
+- [x] T046 Clasificación statistic/fact/opinion/prediction/uncheckable y checkability
+- [x] T047 Selección determinista 3–10 (`select.ts`): especificidad (cifra, periodo, territorio), área beta, deduplicación conservadora; sin speaker/partido; tests
+- [x] T048 Comando `pnpm extract:claims <youtubeId>` que persiste claims (versionadas por transcript) y pasa vídeo a `claims_ready`
+- [x] T049 [P] `packages/evaluation`: formato JSONL de dataset (claims etiquetadas, tipo, checkable, esperado), seed inicial con negativos, ambiguos, equivalencias y pares de invariancia de orador
+- [x] T050 Script `pnpm eval:extraction` que reporta precisión/recobrado de extracción, errores de clasificación y de timestamp por separado
+- [x] T051 Tests de invariancia (misma frase, distinto orador/partido → misma clasificación y rank)
+- [x] T052 Prompt con delimitación de datos no confiables + test de inyección
+- [x] T053 `docs/gates.md` G2 (resultado de eval con/ sin clave; pendiente humano: ≥100 ejemplos revisados por 2 personas)
 
 ---
 

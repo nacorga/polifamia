@@ -52,6 +52,38 @@ Evidencia (2026-10-21):
 Pendiente para cerrar G1: prueba manual de instalación en Chrome estable sobre youtube.com real (fuera del
 catálogo DEMO, que usa IDs ficticios).
 
-## G2 — Motor de afirmaciones (D2) · pendiente
+## G2 — Motor de afirmaciones (D2) · ITERAR (pendiente clave LLM y revisión humana)
+
+Construido (S3, 2026-10-21):
+
+- `packages/investigation`: `LlmClient` (impl. Anthropic con salida estructurada Zod + `FakeLlmClient`),
+  registro por llamada de modelo, `promptVersion`, tokens y coste (EUR). Modelos por entorno:
+  `LLM_MODEL_EXTRACT` (def. `claude-haiku-5-5`), `LLM_MODEL_SYNTH` (def. `claude-opus-5-5`).
+- Segmentación en tramos con solape; `LlmClaimExtractor` con validación determinista: literal debe ser
+  subcadena exacta del tramo (si no → rechazada `not_in_transcript`), timestamps y contexto desde los
+  segmentos, `declaredSource` solo si la fuente aparece en el tramo, checkability derivada del tipo.
+- Selección determinista `selectClaims` (máx. `CLAIMS_MAX`=10): especificidad (cifra, periodo, territorio,
+  métrica, unidad), área beta, fuente declarada; deduplicación conservadora. No lee orador ni partido.
+- `pnpm extract:claims <youtubeId>` persiste las claims seleccionadas de la última transcripción
+  (inmutables por revisión) y pasa el vídeo a `claims_ready` (lista vacía válida).
+- Prompt con transcripción delimitada como datos no confiables + saneado de etiquetas; test de inyección.
+
+Evidencia:
+
+- Tests: investigation 20 (segmentación, extracción, inyección, selección, invariancia de orador/partido),
+  importador+extracción 12 (BD real), evaluación 5.
+- `pnpm eval:extraction` (modo **offline-oracle**, 40 ejemplos / 42 claims): P=R=1, clasificación 1,
+  0 errores de timestamp, 3/3 grupos de invariancia consistentes. **Esto solo valida el arnés y la
+  validación determinista; no es una métrica de calidad de modelo** (el LLM falso devuelve las etiquetas).
+- Sin `ANTHROPIC_API_KEY` en el entorno: `extract:claims` y `eval:extraction -- --real` salen con código 2
+  sin tocar nada.
+
+Pendiente para cerrar G2:
+
+- **Clave LLM (operador)** y ejecutar `pnpm eval:extraction -- --real` → precisión/recobrado reales.
+- **Humano**: ampliar el dataset a ≥100 ejemplos revisados por dos personas (`reviewStatus: "reviewed"`,
+  desacuerdos documentados). El seed actual (`packages/evaluation/data/extraction.seed.jsonl`, 40 ejemplos)
+  está etiquetado solo por el equipo de desarrollo (`unreviewed-seed`).
+- Decidir umbrales preliminares de §12 a partir de la ejecución real; si no se alcanzan, reducir tipos admitidos.
 ## G3 — Motor de evidencias (D3) · pendiente
 ## G4 — Beta técnica (D4) · pendiente
