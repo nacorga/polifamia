@@ -125,6 +125,8 @@ export const investigations = pgTable(
     id: uuid().primaryKey().defaultRandom(),
     claimId: uuid('claim_id').references(() => claims.id),
     manualText: text('manual_text'),
+    // Solo auditoría; nunca se serializa (spec 002 FR-008).
+    manualOrigin: text('manual_origin', { enum: ['web_selection'] }),
     version: integer().notNull(),
     idempotencyKey: text('idempotency_key').notNull().unique(),
     cacheKey: text('cache_key').notNull(),

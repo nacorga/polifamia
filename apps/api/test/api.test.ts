@@ -207,11 +207,66 @@ describe('investigations', () => {
   it('refuses to investigate opinions and unknown claims', async () => {
     const op = await post('/v1/investigations', { claimId: opinionId, idempotencyKey: 'opinion-1' });
     expect(op.status).toBe(400);
+    expect(await op.json()).toMatchObject({ error: { code: 'not_checkable' } });
+    // Texto libre idéntico (normalizado) a una opinión del catálogo hereda su verificabilidad (spec 002 FR-012).
+    const free = await post('/v1/investigations', {
+      manualClaim: '  es lo MEJOR  ',
+      origin: 'web_selection',
+      idempotencyKey: 'opinion-2',
+    });
+    expect(free.status).toBe(400);
+    expect(await free.json()).toMatchObject({ error: { code: 'not_checkable' } });
     const unknown = await post('/v1/investigations', {
       claimId: '00000000-0000-4000-8000-000000000000',
       idempotencyKey: 'unknown-1',
     });
     expect(unknown.status).toBe(404);
+  });
+
+  it('resolves free text equal to a catalogue claim to that claim and shares its cache (SC-004)', async () => {
+    const video = await inv(
+      post('/v1/investigations', { claimId: checkableId, idempotencyKey: 'xchannel-1' }),
+    );
+    await run(video.id);
+    const selected = await post('/v1/investigations', {
+      manualClaim: 'el paro bajó un 5 % en 2024',
+      origin: 'web_selection',
+      idempotencyKey: 'xchannel-2',
+    });
+    expect(selected.status).toBe(200);
+    expect(Investigation.parse(await selected.json())).toMatchObject({
+      id: video.id,
+      claim: { kind: 'video' },
+    });
+  });
+
+  it('pasted and selected text share one investigation; origin is stored, never serialized (SC-005)', async () => {
+    const manualClaim = 'El déficit público fue del 3 % en 2024';
+    const pasted = await inv(post('/v1/investigations', { manualClaim, idempotencyKey: 'origin-1' }));
+    const selected = await inv(
+      post('/v1/investigations', { manualClaim, origin: 'web_selection', idempotencyKey: 'origin-2' }),
+    );
+    expect(selected.id).toBe(pasted.id);
+    expect(selected.claim).toEqual({ kind: 'manual', text: manualClaim });
+
+    const own = await inv(
+      post('/v1/investigations', {
+        manualClaim: 'La deuda pública superó el 100 % en 2024',
+        origin: 'web_selection',
+        idempotencyKey: 'origin-3',
+      }),
+    );
+    const [row] = await db.select().from(investigations).where(eq(investigations.id, own.id));
+    expect(row).toMatchObject({ manualOrigin: 'web_selection', claimId: null });
+    expect(JSON.stringify(own)).not.toMatch(/web_selection/);
+
+    const withUrl = await post('/v1/investigations', {
+      manualClaim,
+      origin: 'web_selection',
+      url: 'https://diario.example/a',
+      idempotencyKey: 'origin-4',
+    });
+    expect(withUrl.status).toBe(400);
   });
 
   it('accepts manual claims without timestamp and validates their length', async () => {
@@ -238,6 +293,21 @@ describe('investigations', () => {
         })
       ).status,
     ).toBe(400);
+  });
+
+  it('free-text opinions classified by the engine end FAILED/not_checkable and are not cached', async () => {
+    const body = { manualClaim: 'Esta reforma es un desastre', origin: 'web_selection' };
+    const created = await inv(post('/v1/investigations', { ...body, idempotencyKey: 'notcheck-1' }));
+    await run(created.id, {
+      investigate: () => Promise.reject(new InvestigationFailure('not_checkable', 'opinion')),
+    });
+    expect(await (await api(`/v1/investigations/${created.id}`)).json()).toMatchObject({
+      status: 'FAILED',
+      conclusion: null,
+      failureReason: 'not_checkable',
+    });
+    const again = await inv(post('/v1/investigations', { ...body, idempotencyKey: 'notcheck-2' }));
+    expect(again.id).not.toBe(created.id);
   });
 
   it('marks operational failures as FAILED with a reason, never with a conclusion', async () => {
@@ -515,6 +585,7 @@ describe('feedback and events', () => {
     ).toBe(204);
     expect((await post('/v1/events', { name: 'panel_opened' })).status).toBe(400);
     expect((await post('/v1/events', { name: 'page_viewed' }, installId)).status).toBe(400);
+    expect((await post('/v1/events', { name: 'selection_investigated' }, installId)).status).toBe(204);
   });
 });
 

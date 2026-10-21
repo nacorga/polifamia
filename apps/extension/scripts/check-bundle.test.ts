@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { checkBundle } from './check-bundle.mjs';
 
 const manifest = {
-  permissions: ['sidePanel', 'storage'],
+  permissions: ['activeTab', 'contextMenus', 'sidePanel', 'storage'],
   host_permissions: ['*://*.youtube.com/*', 'http://localhost:3100/*'],
   content_security_policy: { extension_pages: "script-src 'self'; object-src 'self'" },
   content_scripts: [{ matches: ['*://*.youtube.com/*'] }],
@@ -26,7 +26,7 @@ describe('checkBundle', () => {
   it('flags secrets, server env names and extra permissions', () => {
     const problems: string[] = checkBundle(
       bundle({
-        'manifest.json': JSON.stringify({ ...manifest, permissions: ['sidePanel', 'storage', 'tabs'] }),
+        'manifest.json': JSON.stringify({ ...manifest, permissions: [...manifest.permissions, 'tabs'] }),
         'a.js': 'const k="sk-ant-api03-abcdefghijklmnop"; process.env.FACTCHECK_API_KEY',
       }),
     );

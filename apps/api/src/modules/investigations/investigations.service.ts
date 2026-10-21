@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { CreateInvestigation, Investigation } from '@polifamia/contracts';
-import { cacheKey } from '@polifamia/investigation';
+import { cacheKey, normalizeText } from '@polifamia/investigation';
 import { and, desc, eq, gt, gte, inArray, isNull, max, sum } from 'drizzle-orm';
 import type { PgBoss } from 'pg-boss';
 import type { Config } from '../../config.js';
@@ -33,16 +33,18 @@ export class InvestigationsService {
 
     let literal: string;
     let normalized = {};
-    if ('claimId' in body) {
+    // Texto libre idéntico (normalizado) a un claim del catálogo → se investiga ese claim (caché compartida, spec 002 R4).
+    const claimId = 'claimId' in body ? body.claimId : await this.catalogueMatch(body.manualClaim);
+    if (claimId) {
       // El servidor usa su propia copia del claim; no confía en texto enviado por el navegador.
-      const claim = await this.db.query.claims.findFirst({ where: eq(claims.id, body.claimId) });
+      const claim = await this.db.query.claims.findFirst({ where: eq(claims.id, claimId) });
       if (!claim) throw new ApiError('not_found', 'Claim not found', 404);
       if (claim.checkability !== 'CHECKABLE')
-        throw new ApiError('validation', 'Claim is not checkable as fact', 400);
+        throw new ApiError('not_checkable', 'Claim is not checkable as fact', 400);
       literal = claim.literal;
       normalized = claim.normalized;
     } else {
-      literal = body.manualClaim;
+      literal = (body as { manualClaim: string }).manualClaim;
     }
     const key = cacheKey(literal, normalized, this.config.INVESTIGATION_MODE);
 
@@ -71,8 +73,9 @@ export class InvestigationsService {
     const [created] = await this.db
       .insert(investigations)
       .values({
-        claimId: 'claimId' in body ? body.claimId : null,
-        manualText: 'manualClaim' in body ? body.manualClaim : null,
+        claimId,
+        manualText: claimId ? null : literal,
+        manualOrigin: !claimId && 'origin' in body ? (body.origin ?? null) : null,
         version: (prev?.v ?? 0) + 1,
         idempotencyKey: body.idempotencyKey,
         cacheKey: key,
@@ -115,6 +118,16 @@ export class InvestigationsService {
       .from(investigations)
       .where(gte(investigations.createdAt, start));
     return Number(row?.total ?? 0);
+  }
+
+  /** ponytail: recorrido lineal del catálogo (P0: decenas de claims); columna normalizada indexada si crece. */
+  private async catalogueMatch(text: string): Promise<string | null> {
+    const target = normalizeText(text);
+    const rows = await this.db
+      .select({ id: claims.id, literal: claims.literal })
+      .from(claims)
+      .orderBy(claims.createdAt, claims.id);
+    return rows.find((c) => normalizeText(c.literal) === target)?.id ?? null;
   }
 
   private findByIdempotencyKey(k: string) {

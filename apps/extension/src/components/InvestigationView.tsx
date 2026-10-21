@@ -28,15 +28,19 @@ const KIND: Record<Evidence['source']['kind'], string> = {
   factcheck: 'Verificación publicada',
 };
 
+/** Afirmación tal como la aportó la persona (pegada o seleccionada); se muestra en vez de la del servidor. */
+export type LocalClaim = { text: string; domain?: string };
+
 type Props = {
   id: string;
+  local?: LocalClaim;
   onBack: () => void;
   onSeek: (startMs: number) => void;
   onFeedback: (inv: Investigation) => void;
   onReinvestigate: (inv: Investigation) => void;
 };
 
-export function InvestigationView({ id, onBack, onSeek, onFeedback, onReinvestigate }: Props) {
+export function InvestigationView({ id, local, onBack, onSeek, onFeedback, onReinvestigate }: Props) {
   const query = useQuery({
     queryKey: ['investigation', id],
     queryFn: () => api.investigation(id),
@@ -81,7 +85,14 @@ export function InvestigationView({ id, onBack, onSeek, onFeedback, onReinvestig
         state={inv?.failureReason ?? state}
         action={back}
         // Un job FAILED es definitivo: reintentar crea una investigación nueva; si no, se vuelve a consultar.
-        onRetry={inv?.status === 'FAILED' ? () => onReinvestigate(inv) : () => void query.refetch()}
+        // Lo no verificable no se reintenta: el resultado sería el mismo.
+        onRetry={
+          inv?.failureReason === 'not_checkable'
+            ? undefined
+            : inv?.status === 'FAILED'
+              ? () => onReinvestigate(inv)
+              : () => void query.refetch()
+        }
       />
     );
 
@@ -100,9 +111,14 @@ export function InvestigationView({ id, onBack, onSeek, onFeedback, onReinvestig
       <section className="space-y-1">
         <ViewHeading>Afirmación</ViewHeading>
         <blockquote className="leading-snug">
-          «{inv.claim.kind === 'video' ? inv.claim.literal : inv.claim.text}»
+          «{local?.text ?? (inv.claim.kind === 'video' ? inv.claim.literal : inv.claim.text)}»
         </blockquote>
-        {inv.claim.kind === 'video' ? (
+        {/* Texto libre: aunque coincida con una afirmación de vídeo del catálogo, aquí no hay minuto. */}
+        {local?.domain ? (
+          <p className="text-xs text-muted">
+            Texto seleccionado por ti en {local.domain}; no procede de una transcripción ni tiene minuto.
+          </p>
+        ) : !local && inv.claim.kind === 'video' ? (
           <Button variant="link" onClick={() => inv.claim.kind === 'video' && onSeek(inv.claim.startMs)}>
             Volver al minuto {formatTime(inv.claim.startMs)}
           </Button>
@@ -256,6 +272,10 @@ const FAILURE_COPY: Record<string, [string, string]> = {
   timeout: [
     'La investigación ha tardado demasiado',
     'Se ha detenido al superar el tiempo máximo, sin conclusión. Puedes reintentarlo.',
+  ],
+  not_checkable: [
+    'No es una afirmación verificable',
+    'Parece una opinión o una predicción, así que no se investiga como un hecho. Prueba con un dato concreto, por ejemplo una cifra con su periodo.',
   ],
 };
 

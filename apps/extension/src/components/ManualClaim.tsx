@@ -3,10 +3,16 @@ import { useId, useState } from 'react';
 import { API_HOST } from '../lib/api-client';
 import { Button, ViewHeading } from './ui';
 
-type Props = { busy: boolean; onSubmit: (text: string) => void; onCancel: () => void };
+type Props = {
+  busy: boolean;
+  onSubmit: (text: string) => void;
+  onCancel: () => void;
+  /** Selección de una página: prellena el texto y muestra su origen, que no se envía (FR-005). */
+  page?: { text: string; url: string; domain: string; title: string };
+};
 
-export function ManualClaim({ busy, onSubmit, onCancel }: Props) {
-  const [text, setText] = useState('');
+export function ManualClaim({ busy, onSubmit, onCancel, page }: Props) {
+  const [text, setText] = useState(page?.text ?? '');
   const id = useId();
   const length = text.trim().length;
   const valid = length >= MANUAL_CLAIM_MIN && length <= MANUAL_CLAIM_MAX;
@@ -18,9 +24,19 @@ export function ManualClaim({ busy, onSubmit, onCancel }: Props) {
         if (valid) onSubmit(text.trim());
       }}
     >
-      <ViewHeading>Pegar una afirmación</ViewHeading>
+      <ViewHeading>{page ? 'Investigar esta afirmación' : 'Pegar una afirmación'}</ViewHeading>
+      {page && (
+        <p className="text-xs text-muted">
+          Seleccionado en <strong>{page.domain}</strong>
+          {page.title && ` · ${page.title}`}
+          <br />
+          <span className="break-all">{page.url}</span>
+        </p>
+      )}
       <label htmlFor={id} className="block text-muted">
-        Escribe o pega la frase que quieres investigar.
+        {page
+          ? 'Revisa el texto: recórtalo a una sola afirmación con su dato si incluye varias.'
+          : 'Escribe o pega la frase que quieres investigar.'}
       </label>
       <textarea
         id={id}
@@ -38,7 +54,10 @@ export function ManualClaim({ busy, onSubmit, onCancel }: Props) {
       </p>
       <p id={`${id}-privacy`} className="rounded bg-wash p-2 text-xs">
         Se enviará solo este texto a <strong>{API_HOST}</strong> para buscar verificaciones y fuentes
-        oficiales. Se tratará como texto aportado por ti: no se asociará a ningún minuto del vídeo.
+        oficiales.{' '}
+        {page
+          ? 'El medio, la dirección y el título de la página no se envían: solo se muestran aquí.'
+          : 'Se tratará como texto aportado por ti: no se asociará a ningún minuto del vídeo.'}
       </p>
       <div className="flex gap-3">
         <Button type="submit" disabled={!valid || busy}>

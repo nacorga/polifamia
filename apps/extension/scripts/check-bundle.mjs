@@ -11,7 +11,7 @@ const SECRET_PATTERNS = [
   [/ANTHROPIC_API_KEY|FACTCHECK_API_KEY|DATABASE_URL|LLM_MODEL_/, 'server env var name'],
   [/postgres(ql)?:\/\/\w+:[^@\s'"]+@/, 'database URL with credentials'],
 ];
-const PERMISSIONS = ['sidePanel', 'storage'];
+const PERMISSIONS = ['activeTab', 'contextMenus', 'sidePanel', 'storage'];
 const CSP = "script-src 'self'; object-src 'self'";
 
 const files = (dir) =>

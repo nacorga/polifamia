@@ -4,17 +4,19 @@ import { useEffect, useState } from 'react';
 import { ClaimList } from '../../src/components/ClaimList';
 import { Coverage } from '../../src/components/Coverage';
 import { FeedbackForm } from '../../src/components/FeedbackForm';
-import { FailureNotice, InvestigationView } from '../../src/components/InvestigationView';
+import { FailureNotice, InvestigationView, type LocalClaim } from '../../src/components/InvestigationView';
 import { ManualClaim } from '../../src/components/ManualClaim';
 import { Button, DemoBadge, Notice, ViewHeading } from '../../src/components/ui';
 import { videoState } from '../../src/hooks/usePanelState';
 import { API_HOST, api } from '../../src/lib/api-client';
-import { seek, useActiveVideo, type ActiveVideo } from '../../src/lib/chrome-bridge';
+import { seek, useActiveVideo, usePageSelection, type ActiveVideo } from '../../src/lib/chrome-bridge';
+import type { PageSelection } from '../../src/lib/selection';
 
 let panelOpenedSent = false;
 
 export function App() {
   const active = useActiveVideo();
+  const { selection, clear } = usePageSelection(active?.tabId ?? null);
   const [coverage, setCoverage] = useState(false);
   useEffect(() => {
     if (panelOpenedSent) return;
@@ -39,8 +41,8 @@ export function App() {
           </button>
         </div>
         <p className="text-xs text-muted">
-          Qué se ha afirmado, qué fuentes hay y qué queda sin probar. Solo se envía a {API_HOST} el
-          identificador del vídeo y lo que decidas investigar.{' '}
+          Qué se ha afirmado, qué fuentes hay y qué queda sin probar. Solo se envía a {API_HOST} lo que
+          decidas investigar y, en YouTube, el identificador del vídeo.{' '}
           {!coverage && (
             <Button variant="link" onClick={() => setCoverage(true)}>
               Cobertura y límites
@@ -53,8 +55,14 @@ export function App() {
         {/* Oculto, no desmontado: abrir «Cobertura» no pierde una investigación en curso. */}
         <div hidden={coverage}>
           {active ? (
-            // `key` reinicia todo el estado al cambiar de pestaña o de vídeo: nunca se mezclan datos.
-            <VideoPanel key={`${active.tabId}:${active.videoId}`} video={active} />
+            // `key` reinicia todo el estado al cambiar de pestaña, de vídeo o de selección: nunca se mezclan
+            // datos ni llega tarde el resultado de una selección anterior.
+            <VideoPanel
+              key={`${active.tabId}:${active.videoId}:${selection?.at ?? ''}`}
+              video={active}
+              selection={selection}
+              onSelectionDone={clear}
+            />
           ) : (
             <p className="text-muted">Conectando con la pestaña…</p>
           )}
@@ -67,12 +75,19 @@ export function App() {
 type View =
   | { kind: 'list' }
   | { kind: 'manual' }
-  | { kind: 'investigation'; id: string }
-  | { kind: 'feedback'; investigation: Investigation };
+  | { kind: 'selection' }
+  | { kind: 'unsupported_page' }
+  | { kind: 'investigation'; id: string; local?: LocalClaim }
+  | { kind: 'feedback'; investigation: Investigation; local?: LocalClaim };
 
-function VideoPanel({ video }: { video: ActiveVideo }) {
+type Props = { video: ActiveVideo; selection: PageSelection | null; onSelectionDone: () => void };
+
+function VideoPanel({ video, selection, onSelectionDone }: Props) {
   const { tabId, videoId } = video;
-  const [view, setView] = useState<View>({ kind: 'list' });
+  const page = selection && !('unsupported' in selection) ? selection : null;
+  const [view, setView] = useState<View>(() =>
+    page ? { kind: 'selection' } : selection ? { kind: 'unsupported_page' } : { kind: 'list' },
+  );
   const [seekFailed, setSeekFailed] = useState(false);
 
   const availability = useQuery({
@@ -91,11 +106,25 @@ function VideoPanel({ video }: { video: ActiveVideo }) {
     mutationFn: (body: CreateInvestigation) => api.createInvestigation(body),
     // Reintento único ante fallo de red con la misma idempotencyKey: nunca duplica la investigación.
     retry: (n, err) => n < 1 && (err as { code?: string }).code === 'network',
-    onSuccess: (inv) => setView({ kind: 'investigation', id: inv.id }),
   });
-  const start = (body: { claimId: string } | { manualClaim: string }) => {
+  /** `local`: texto libre (pegado o seleccionado), que se muestra tal cual y nunca con minuto. */
+  const start = (body: { claimId: string } | { manualClaim: string }, local?: LocalClaim) => {
     api.event({ name: 'investigation_requested', videoId: videoId ?? undefined });
-    investigate.mutate({ ...body, idempotencyKey: crypto.randomUUID() });
+    const origin = local?.domain ? { origin: 'web_selection' as const } : {};
+    investigate.mutate(
+      { ...body, ...origin, idempotencyKey: crypto.randomUUID() },
+      {
+        onSuccess: (inv) => {
+          if (local?.domain) api.event({ name: 'selection_investigated', investigationId: inv.id });
+          setView({ kind: 'investigation', id: inv.id, local });
+        },
+      },
+    );
+  };
+  const startText = (text: string, domain?: string) => start({ manualClaim: text }, { text, domain });
+  const cancel = () => {
+    onSelectionDone();
+    setView({ kind: 'list' });
   };
 
   const seekTo = async (startMs: number) => {
@@ -124,11 +153,16 @@ function VideoPanel({ video }: { video: ActiveVideo }) {
     return (
       <InvestigationView
         id={view.id}
+        local={view.local}
         onBack={() => setView({ kind: 'list' })}
         onSeek={(ms) => void seekTo(ms)}
-        onFeedback={(inv) => setView({ kind: 'feedback', investigation: inv })}
+        onFeedback={(inv) => setView({ kind: 'feedback', investigation: inv, local: view.local })}
         onReinvestigate={(inv) =>
-          start(inv.claim.kind === 'video' ? { claimId: inv.claim.claimId } : { manualClaim: inv.claim.text })
+          view.local
+            ? startText(view.local.text, view.local.domain)
+            : start(
+                inv.claim.kind === 'video' ? { claimId: inv.claim.claimId } : { manualClaim: inv.claim.text },
+              )
         }
       />
     );
@@ -136,15 +170,28 @@ function VideoPanel({ video }: { video: ActiveVideo }) {
     return (
       <FeedbackForm
         investigation={view.investigation}
-        onDone={() => setView({ kind: 'investigation', id: view.investigation.id })}
+        onDone={() => setView({ kind: 'investigation', id: view.investigation.id, local: view.local })}
       />
     );
   if (view.kind === 'manual')
     return (
       <ManualClaim
         busy={investigate.isPending}
-        onSubmit={(text) => start({ manualClaim: text })}
+        onSubmit={(text) => startText(text)}
         onCancel={() => setView({ kind: 'list' })}
+      />
+    );
+  if (view.kind === 'selection' && page)
+    return (
+      <ManualClaim
+        key={page.at}
+        page={page}
+        busy={investigate.isPending}
+        onSubmit={(text) => {
+          onSelectionDone();
+          startText(text, page.domain);
+        }}
+        onCancel={cancel}
       />
     );
 
@@ -160,12 +207,21 @@ function VideoPanel({ video }: { video: ActiveVideo }) {
     </Button>
   );
 
+  if (view.kind === 'unsupported_page')
+    return (
+      <Notice title="Esta página no es compatible" action={manualButton}>
+        No se puede investigar texto de PDFs, páginas internas del navegador ni ficheros locales. Puedes pegar
+        la afirmación para investigarla.
+      </Notice>
+    );
+
   switch (state) {
     case 'idle':
       return (
-        <Notice title="Abre un vídeo de YouTube" action={manualButton}>
-          El panel muestra las afirmaciones de los vídeos del catálogo autorizado. También puedes investigar
-          una frase suelta.
+        <Notice title="Selecciona una frase y elige «Investigar esta afirmación»" action={manualButton}>
+          En cualquier noticia, selecciona una frase con un dato, haz clic derecho y elige «Investigar esta
+          afirmación». En los vídeos de YouTube del catálogo, el panel muestra sus afirmaciones. También
+          puedes pegar una afirmación.
         </Notice>
       );
     case 'loading':

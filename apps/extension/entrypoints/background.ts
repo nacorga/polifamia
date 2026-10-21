@@ -1,18 +1,25 @@
 import { browser, defineBackground } from '#imports';
+import { selectionFromClick, selectionKey } from '../src/lib/selection';
 
-const isYoutube = (url?: string) => !!url && /^https:\/\/(www\.|m\.)?youtube\.com\//.test(url);
-
-/** El panel solo existe en pestañas de YouTube; en el resto queda deshabilitado (FR-012). */
-function syncPanel(tabId: number, url?: string) {
-  void browser.sidePanel.setOptions({ tabId, path: 'sidepanel.html', enabled: isYoutube(url) });
-}
+const MENU_ID = 'investigate-selection';
 
 export default defineBackground(() => {
+  // El panel existe en cualquier pestaña, pero solo se abre por el icono o el menú (FR-002, FR-013).
   void browser.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
-  browser.tabs.onUpdated.addListener((tabId, info, tab) => {
-    if (info.url || info.status === 'complete') syncPanel(tabId, tab.url);
+  browser.runtime.onInstalled.addListener(() => {
+    browser.contextMenus.create({
+      id: MENU_ID,
+      title: 'Investigar esta afirmación',
+      contexts: ['selection'],
+      documentUrlPatterns: ['http://*/*', 'https://*/*'],
+    });
   });
-  browser.runtime.onInstalled.addListener(async () => {
-    for (const tab of await browser.tabs.query({})) if (tab.id !== undefined) syncPanel(tab.id, tab.url);
+  browser.contextMenus.onClicked.addListener((info, tab) => {
+    if (info.menuItemId !== MENU_ID || tab?.id === undefined) return;
+    // Antes de cualquier await: `sidePanel.open` solo funciona dentro del gesto del usuario.
+    void browser.sidePanel.open({ tabId: tab.id });
+    // `storage.session` vive en memoria: el panel la lee aunque aún no estuviera abierto.
+    void browser.storage.session.set({ [selectionKey(tab.id)]: selectionFromClick(info, tab) });
   });
+  browser.tabs.onRemoved.addListener((tabId) => void browser.storage.session.remove(selectionKey(tabId)));
 });

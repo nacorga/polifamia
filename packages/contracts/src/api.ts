@@ -71,6 +71,8 @@ export const CreateInvestigation = z.union([
   z.strictObject({ claimId: z.uuid(), idempotencyKey: IdempotencyKey }),
   z.strictObject({
     manualClaim: z.string().trim().min(MANUAL_CLAIM_MIN).max(MANUAL_CLAIM_MAX),
+    // Texto seleccionado en una página; medio, dirección y título nunca se envían (spec 002 FR-007).
+    origin: z.literal('web_selection').optional(),
     idempotencyKey: IdempotencyKey,
   }),
 ]);

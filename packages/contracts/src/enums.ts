@@ -65,6 +65,7 @@ export const FailureReason = z.enum([
   'provider_error',
   'no_llm_key',
   'timeout',
+  'not_checkable',
 ]);
 export type FailureReason = z.infer<typeof FailureReason>;
 
@@ -77,6 +78,7 @@ export const EventName = z.enum([
   'result_opened',
   'source_clicked',
   'feedback_sent',
+  'selection_investigated',
 ]);
 export type EventName = z.infer<typeof EventName>;
 
@@ -88,6 +90,7 @@ export const ErrorCode = z.enum([
   'source_unavailable',
   'validation',
   'not_found',
+  'not_checkable',
   'internal',
 ]);
 export type ErrorCode = z.infer<typeof ErrorCode>;

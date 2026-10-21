@@ -175,6 +175,76 @@ Evidencia (2026-10-21):
   5 POST más → `202 202 202 429 429`; 7 GET de polling → todos 200; OpenAPI con 7 rutas; schedule
   `retention-purge | 17 3 * * * | UTC` registrado; logs de worker con `stage` y `correlationId`.
 
+## G5 — Selección web (002) · GO técnico (DEMO) · gates humanos pendientes
+
+Spec `specs/002-web-claim-investigation/`. Solo se envía el texto (con `origin: "web_selection"`); medio, dirección y
+título quedan en el panel.
+
+### Backend (S1) · GO técnico
+
+Evidencia (2026-10-21):
+
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build && pnpm format:check` en verde. Tests: contracts 7,
+  connectors 26, extensión 12, investigation 60, evaluation 7, API integración 23 (PostgreSQL real), importador 12.
+- Migración `0001_web_selection` (`event_name += selection_investigated`, `failure_reason += not_checkable`, columna
+  `investigations.manual_origin`); `db:generate` sin drift.
+- Integración API cubre: texto libre igual (normalizado) a un claim del catálogo → misma investigación que `{claimId}`,
+  respuesta 200 desde caché (SC-004); pegado y seleccionado → misma investigación (SC-005); `manual_origin` guardado y
+  no serializado; `url` en el body → 400; opinión del catálogo (por `claimId` o por texto) → 400 `not_checkable`;
+  opinión clasificada por el motor → `FAILED/not_checkable`, no reutilizada; evento `selection_investigated` → 204.
+- Motor real: el extractor que clasifica el texto libre como opinión/predicción corta con `not_checkable` (unit test).
+  Cambia también el texto pegado de 001 en modo real (antes se investigaba como hecho; constitución II).
+- Límite conocido: en DEMO, una opinión sin coincidencia en el catálogo no se detecta.
+
+### Extensión (S2) · GO técnico (pendiente E2E de S3 y prueba manual del menú)
+
+Evidencia (2026-10-21):
+
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build && pnpm format:check` en verde. Unit extensión 20 (+8:
+  `selectionFromClick` quita query y fragmento, marca `chrome://`, `file://` y PDF como no compatibles; guardia de
+  permisos con `activeTab, contextMenus, sidePanel, storage`, `tabs` sigue rechazado).
+- Manifest: permisos `activeTab, contextMenus, sidePanel, storage`; host permissions sin cambios (YouTube + API);
+  content script solo en YouTube. Bundle check en verde en `chrome-mv3` y `chrome-mv3-e2e`.
+- Background: menú «Investigar esta afirmación» solo sobre selección en http(s); `sidePanel.open` antes de cualquier
+  `await`; la selección (texto, origen+ruta, dominio, título) va a `storage.session` y se borra al enviar, cancelar o
+  cerrar la pestaña. Panel disponible en cualquier pestaña.
+- Panel: selección → vista prellenada con medio y dirección «no se envían»; envío `{manualClaim, origin, idempotencyKey}`;
+  resultado con la afirmación local («Texto seleccionado por ti en <medio>», sin minuto aunque la API la resuelva a un
+  vídeo del catálogo); `not_checkable` sin reintento; evento `selection_investigated`; guía US4 en pestañas sin vídeo.
+- E2E existentes: 16/17 en verde. Falla, como estaba previsto, «panel lateral: … solo está habilitado en YouTube»
+  (`other.enabled` es ahora `true` por diseño, R2); se reescribe en S3 (T023).
+
+### E2E y documentación (S3) · GO técnico
+
+Evidencia (2026-10-21):
+
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build && pnpm format:check && pnpm e2e` en verde. E2E 22/22
+  (17 de 001, con el del panel reescrito, + 5 de 002) sobre el artículo DEMO `https://diario.example/…`
+  (`e2e/fixtures/article.html`, dominio reservado):
+  1. selección (vía `storage.session`, como el clic del menú) → panel con texto, `diario.example` y ruta sin
+     `?utm_source…`/`sessionid`/`#p3`; 0 POST antes de confirmar; body exactamente `manualClaim`, `origin`,
+     `idempotencyKey`, sin dominio, ruta ni título (SC-006); resultado DEMO «Texto seleccionado por ti en
+     diario.example», sin minuto, con «Hay un problema…» (FR-017); la selección se borra al enviar;
+  2. misma afirmación investigada en el vídeo DEMO y seleccionada (en mayúsculas) en el artículo → mismo id, 200
+     desde caché (SC-004);
+  3. recortar la selección, texto corto deshabilita el envío, opinión DEMO → «No es una afirmación verificable» sin
+     reintento;
+  4. pestaña sin vídeo → guía + «Pegar una afirmación»; selección en un PDF → «Esta página no es compatible»;
+  5. navegar y seleccionar texto sin invocar → 0 peticiones al servicio y `storage.session` vacío (SC-002).
+- El test de 001 «panel solo habilitado en YouTube» pasa a «se abre con el icono en cualquier pestaña sin ver su
+  URL»: el panel está habilitado en todas (FR-013) y la URL de la otra pestaña sigue invisible.
+- `docs/privacy.md` actualizado (permisos, solo texto, datos locales, evento nuevo).
+
+### Pendiente (humano)
+
+- [ ] **Prueba manual del menú** en Chrome estable (`specs/002-web-claim-investigation/quickstart.md`): el clic real
+      en «Investigar esta afirmación» abre el panel a la primera (`sidePanel.open` dentro del gesto), páginas internas
+      y `file://` sin item, visor de PDF.
+- [ ] **Revisión legal** de la ampliación a artículos (constitución III) y de la retención del texto seleccionado.
+- [ ] **Chrome Web Store**: justificación de `contextMenus` y `activeTab` en el formulario de prácticas de privacidad.
+- [ ] **SC-008**: validación con usuarios (≥70 % investigan una frase de una noticia sin ayuda; objetivo provisional).
+- [ ] **SC-007**: umbrales de calidad de 001 para afirmaciones de artículos; mismo motor, depende de G2/G3.
+
 ## Definition of Done (PRD §14)
 
 | # | Criterio | Estado | Evidencia / pendiente |

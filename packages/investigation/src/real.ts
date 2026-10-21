@@ -109,7 +109,11 @@ export class RealInvestigator implements Investigator {
       const r = await new LlmClaimExtractor(budget, this.deps.models.extract).extract([
         { startMs: 0, endMs: 0, text: input.literal },
       ]);
-      normalized = r.candidates[0]?.normalized ?? {};
+      const first = r.candidates[0];
+      // Opiniones y predicciones no se evalúan como hechos (constitución II; spec 002 FR-012).
+      if (first?.checkability === 'NOT_CHECKABLE')
+        throw new InvestigationFailure('not_checkable', `Claim type ${first.claimType} is not checkable`);
+      normalized = first?.normalized ?? {};
       stage('normalize');
     }
 

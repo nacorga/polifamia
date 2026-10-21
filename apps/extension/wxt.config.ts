@@ -9,9 +9,10 @@ export default defineConfig({
   manifest: {
     name: 'Polifamia — investigar afirmaciones',
     description:
-      'Investiga afirmaciones de vídeos de YouTube con fuentes verificables. Solo actúa cuando abres el panel.',
-    // Sin `tabs`: la URL solo se lee en pestañas con host permission (YouTube), no del resto (FR-012).
-    permissions: ['sidePanel', 'storage'],
+      'Investiga afirmaciones de artículos y vídeos de YouTube con fuentes verificables. Solo actúa cuando la invocas.',
+    // Sin `tabs`: la URL solo se lee en YouTube (host permission) o en la pestaña donde se invoca el menú
+    // contextual (`activeTab`, temporal); nunca del resto (FR-012 de 001, FR-003 de 002).
+    permissions: ['activeTab', 'contextMenus', 'sidePanel', 'storage'],
     host_permissions: ['*://*.youtube.com/*', `${new URL(apiUrl).origin}/*`],
     action: { default_title: 'Abrir Polifamia' },
     // CSP explícita de MV3: solo scripts propios, sin eval ni orígenes remotos.

@@ -9,6 +9,7 @@ import {
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import type { browser } from 'wxt/browser';
+import { selectionFromClick, selectionKey } from '../src/lib/selection';
 import { E2E_PORT } from './global-setup';
 
 // `chrome` existe dentro del service worker donde se evalúan los callbacks de `sw.evaluate`.
@@ -17,6 +18,7 @@ declare const chrome: typeof browser;
 const EXTENSION = fileURLToPath(new URL('../.output/chrome-mv3-e2e', import.meta.url));
 const WATCH_HTML = readFileSync(new URL('./fixtures/watch.html', import.meta.url));
 const VIDEO = readFileSync(new URL('./fixtures/video.webm', import.meta.url));
+const ARTICLE_HTML = readFileSync(new URL('./fixtures/article.html', import.meta.url));
 const API = `http://localhost:${E2E_PORT}`;
 
 type ClaimDto = { id: string; literal: string; startMs: number; checkability: string };
@@ -43,6 +45,10 @@ const test = base.extend<Fixtures>({
         return route.fulfill({ body: VIDEO, contentType: 'video/webm' });
       return route.fulfill({ body: WATCH_HTML, contentType: 'text/html' });
     });
+    // Medio ficticio en un dominio reservado (.example): artículo DEMO, nunca una web real.
+    await context.route('https://diario.example/**', (route) =>
+      route.fulfill({ body: ARTICLE_HTML, contentType: 'text/html' }),
+    );
     await use(context);
     await context.close();
   },
@@ -173,20 +179,17 @@ test('API caída: error recuperable con reintento', async ({ panel }) => {
   await expect(panel.getByRole('heading', { name: 'Análisis disponible' })).toBeVisible();
 });
 
-test('panel lateral: se abre con el icono y solo está habilitado en YouTube', async ({
+test('panel lateral: se abre con el icono en cualquier pestaña sin ver su URL', async ({
   context,
   sw,
   youtube,
 }) => {
-  await context.route('https://example.org/**', (route) =>
-    route.fulfill({ body: 'otra web', contentType: 'text/html' }),
-  );
   const other = await context.newPage();
-  await other.goto('https://example.org/');
+  await other.goto(ARTICLE_URL);
   void youtube;
   const result = await sw.evaluate(async () => {
     const [yt] = await chrome.tabs.query({ url: 'https://www.youtube.com/*' });
-    // Sin permiso `tabs` la extensión no ve la URL de pestañas fuera de YouTube (FR-012).
+    // Sin permiso `tabs` la extensión no ve la URL de pestañas fuera de YouTube (FR-003).
     const ex = (await chrome.tabs.query({})).find(
       (t) => t.id !== yt!.id && !t.url && t.status === 'complete',
     );
@@ -199,7 +202,8 @@ test('panel lateral: se abre con el icono y solo está habilitado en YouTube', a
   });
   expect(result.behavior.openPanelOnActionClick).toBe(true);
   expect(result.youtube.enabled).toBe(true);
-  expect(result.other.enabled).toBe(false);
+  // 002: el panel está disponible en cualquier pestaña (FR-013), pero solo se abre al invocarlo.
+  expect(result.other.enabled).not.toBe(false);
   expect(result.otherUrlVisible).toBe(false);
 });
 
@@ -305,4 +309,165 @@ test('cobertura y límites: se consulta sin perder la vista actual', async ({ pa
   await expect(coverage.getByText(/no significa que la afirmación sea falsa/)).toBeVisible();
   await coverage.getByRole('button', { name: '← Volver' }).click();
   await expect(panel.getByRole('heading', { name: 'Análisis disponible' })).toBeVisible();
+});
+
+// —— 002: selección en artículos ——
+
+const ARTICLE_URL = 'https://diario.example/2026/10/articulo-demo?utm_source=x&sessionid=abc#p3';
+const ARTICLE_TITLE = 'DEMO — Precios y familias (artículo de prueba)';
+const FACT = 'La inflación interanual cerró 2023 en el 3,1 %.';
+const OPINION = 'Esta política fiscal es injusta para las familias.';
+
+/** Abre el artículo DEMO y devuelve el id de su pestaña (la más reciente: sin `tabs` no vemos su URL). */
+async function openArticle(context: BrowserContext, sw: Worker) {
+  const page = await context.newPage();
+  await page.goto(ARTICLE_URL);
+  const tabId = await sw.evaluate(async () => Math.max(...(await chrome.tabs.query({})).map((t) => t.id!)));
+  return { page, tabId };
+}
+
+/** Lo que haría el clic en «Investigar esta afirmación» (Playwright no puede pulsar menús nativos). */
+const select = (sw: Worker, tabId: number, selectionText: string, pageUrl = ARTICLE_URL) =>
+  sw.evaluate(([k, v]) => chrome.storage.session.set({ [k]: v }), [
+    selectionKey(tabId),
+    selectionFromClick({ selectionText, pageUrl }, { title: ARTICLE_TITLE }),
+  ] as const);
+
+async function openPanel(context: BrowserContext, sw: Worker, tabId: number) {
+  const extId = new URL(sw.url()).host;
+  const [panel] = await Promise.all([
+    context.waitForEvent('page'),
+    sw.evaluate(
+      (url) => chrome.windows.create({ url, type: 'popup', width: 400, height: 800 }),
+      `chrome-extension://${extId}/sidepanel.html?tabId=${tabId}`,
+    ),
+  ]);
+  await panel!.waitForLoadState();
+  return panel!;
+}
+
+const isCreate = (r: { method(): string; url(): string }) =>
+  r.method() === 'POST' && r.url() === `${API}/v1/investigations`;
+
+test('selección en artículo: panel con origen local, solo se envía el texto, resultado sin minuto', async ({
+  context,
+  sw,
+}) => {
+  const { tabId } = await openArticle(context, sw);
+  const panel = await openPanel(context, sw, tabId);
+  const bodies: unknown[] = [];
+  panel.on('request', (r) => {
+    if (isCreate(r)) bodies.push(r.postDataJSON());
+  });
+  // Con el panel ya abierto: la selección llega por `storage.session.onChanged`.
+  await select(sw, tabId, `  ${FACT}\n`);
+
+  await expect(panel.getByRole('heading', { name: 'Investigar esta afirmación' })).toBeVisible();
+  await expect(panel.getByRole('textbox')).toHaveValue(FACT);
+  await expect(panel.getByText('diario.example', { exact: true })).toBeVisible();
+  await expect(
+    panel.getByText('https://diario.example/2026/10/articulo-demo', { exact: true }),
+  ).toBeVisible();
+  await expect(panel.getByText(/no se envían: solo se muestran aquí/)).toBeVisible();
+  const shown = await panel.locator('body').innerText();
+  for (const leak of ['utm_source', 'sessionid', '#p3']) expect(shown).not.toContain(leak);
+  expect(bodies).toHaveLength(0); // nada se envía antes de confirmar (US1.2)
+
+  await panel.getByRole('button', { name: 'Investigar', exact: true }).click();
+  const result = panel.getByRole('article', { name: 'Resultado de la investigación' });
+  await expect(result).toBeVisible({ timeout: 15_000 });
+  await expect(result.getByText('resultado simulado para probar la experiencia')).toBeVisible();
+  await expect(result.getByText(/Texto seleccionado por ti en diario\.example/)).toBeVisible();
+  await expect(result.getByRole('button', { name: /Volver al minuto/ })).toHaveCount(0);
+  await expect(result.getByRole('button', { name: 'Hay un problema con esta investigación' })).toBeVisible();
+
+  // SC-006: el cuerpo lleva solo texto, origen y clave; ni medio, ni dirección, ni título.
+  expect(bodies).toHaveLength(1);
+  const body = bodies[0] as Record<string, unknown>;
+  expect(Object.keys(body).sort()).toEqual(['idempotencyKey', 'manualClaim', 'origin']);
+  expect(body).toMatchObject({ manualClaim: FACT, origin: 'web_selection' });
+  const raw = JSON.stringify(body);
+  for (const leak of ['diario', 'articulo-demo', 'Precios y familias']) expect(raw).not.toContain(leak);
+  // Se envió: la selección se borra de la sesión.
+  expect(await sw.evaluate((k) => chrome.storage.session.get(k), selectionKey(tabId))).toEqual({});
+});
+
+test('mismo motor: la frase del artículo reutiliza la investigación del vídeo (SC-004)', async ({
+  context,
+  sw,
+  panel,
+}) => {
+  const claim = (await claimsOf('DEMOvideo01')).find((c) => c.literal === FACT)!;
+  const created: { status: number; id: string }[] = [];
+  const track = (p: Page) =>
+    p.on('response', async (r) => {
+      if (isCreate(r.request()))
+        created.push({ status: r.status(), id: ((await r.json()) as { id: string }).id });
+    });
+  track(panel);
+  await panel.getByRole('button', { name: `Investigar: ${claim.literal}` }).click();
+  await expect(panel.getByRole('article', { name: 'Resultado de la investigación' })).toBeVisible({
+    timeout: 15_000,
+  });
+
+  const { tabId } = await openArticle(context, sw);
+  await select(sw, tabId, FACT.toUpperCase()); // misma afirmación con otra forma: mismo texto normalizado
+  const articlePanel = await openPanel(context, sw, tabId);
+  track(articlePanel);
+  await articlePanel.getByRole('button', { name: 'Investigar', exact: true }).click();
+  const result = articlePanel.getByRole('article', { name: 'Resultado de la investigación' });
+  await expect(result).toBeVisible();
+  await expect(result.getByText(/Texto seleccionado por ti en diario\.example/)).toBeVisible();
+  await expect(result.getByRole('button', { name: /Volver al minuto/ })).toHaveCount(0);
+
+  await expect.poll(() => created.length).toBe(2);
+  expect(created[1]!.status).toBe(200); // reutilizada, sin nueva investigación
+  expect(created[1]!.id).toBe(created[0]!.id);
+});
+
+test('revisar la selección: recortar, demasiado corto y opinión no verificable', async ({ context, sw }) => {
+  const { tabId } = await openArticle(context, sw);
+  await select(sw, tabId, `Según el artículo, ${FACT} Y además los salarios subieron mucho.`);
+  const panel = await openPanel(context, sw, tabId);
+  const box = panel.getByRole('textbox');
+  const submit = panel.getByRole('button', { name: 'Investigar', exact: true });
+  await expect(box).toHaveValue(/Según el artículo/);
+
+  await box.fill('corto');
+  await expect(panel.getByText(/· mínimo 10/)).toBeVisible();
+  await expect(submit).toBeDisabled();
+
+  await box.fill(OPINION); // recortada a una sola frase: una opinión del catálogo DEMO
+  await submit.click();
+  await expect(panel.getByRole('heading', { name: 'No es una afirmación verificable' })).toBeVisible();
+  await expect(panel.getByRole('button', { name: 'Reintentar' })).toHaveCount(0);
+  await expect(panel.getByRole('article', { name: 'Resultado de la investigación' })).toHaveCount(0);
+  await expect(panel.getByRole('button', { name: '← Volver' })).toBeVisible();
+});
+
+test('panel en cualquier página: guía, pegar y página no compatible', async ({ context, sw }) => {
+  const { tabId } = await openArticle(context, sw);
+  const panel = await openPanel(context, sw, tabId);
+  await expect(
+    panel.getByRole('heading', { name: 'Selecciona una frase y elige «Investigar esta afirmación»' }),
+  ).toBeVisible();
+  await expect(panel.getByRole('button', { name: 'Pegar una afirmación' })).toBeVisible();
+
+  await select(sw, tabId, FACT, 'https://diario.example/informe.pdf'); // visor de PDF (FR-014)
+  await expect(panel.getByRole('heading', { name: 'Esta página no es compatible' })).toBeVisible();
+  await panel.getByRole('button', { name: 'Pegar una afirmación' }).click();
+  await expect(panel.getByRole('heading', { name: 'Pegar una afirmación' })).toBeVisible();
+});
+
+test('sin invocar la extensión: nada leído ni enviado (SC-002)', async ({ context, sw }) => {
+  const calls: string[] = [];
+  context.on('request', (r) => {
+    if (r.url().startsWith(API)) calls.push(r.url());
+  });
+  const { page } = await openArticle(context, sw);
+  await page.getByText(FACT).selectText();
+  await page.goto('https://diario.example/otra-noticia');
+  await page.waitForTimeout(1000);
+  expect(calls).toEqual([]);
+  expect(await sw.evaluate(() => chrome.storage.session.get(null))).toEqual({});
 });
