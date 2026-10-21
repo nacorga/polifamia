@@ -34,6 +34,14 @@ export const ExtensionMessage = z.discriminatedUnion('type', [
   VideoGetState,
 ]);
 export type ExtensionMessage = z.infer<typeof ExtensionMessage>;
+
+/** Lo que emite el content script: no conoce su tabId; el receptor lo toma de `sender.tab.id`. */
+export const ContentMessage = z.discriminatedUnion('type', [
+  VideoState.omit({ tabId: true }),
+  VideoNavigated.omit({ tabId: true }),
+]);
+export type ContentMessage = z.infer<typeof ContentMessage>;
+export type VideoGetState = z.infer<typeof VideoGetState>;
 export type VideoState = z.infer<typeof VideoState>;
 export type VideoSeek = z.infer<typeof VideoSeek>;
 export type SeekResult = z.infer<typeof SeekResult>;

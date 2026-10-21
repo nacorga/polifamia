@@ -36,3 +36,7 @@ jobs:
       - run: pnpm db:migrate
       - run: pnpm test
       - run: pnpm build
+      - run: pnpm --filter @polifamia/extension exec playwright install --with-deps chromium
+      - run: pnpm e2e
+        env:
+          DATABASE_URL_ADMIN: postgres://polifamia:polifamia@localhost:5432/polifamia_test

@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Fixture de vídeo (E2E)</title>
+  </head>
+  <body>
+    <!-- Imita solo lo que lee el content script: URL /watch?v= y un <video> dentro de #movie_player. -->
+    <div id="movie_player"><video muted autoplay loop width="320" height="180"></video></div>
+    <script>
+      fetch('/__fixture/video.webm')
+        .then((r) => r.blob())
+        .then((b) => {
+          const v = document.querySelector('video');
+          v.src = URL.createObjectURL(b);
+          v.play().catch(() => {});
+        });
+    </script>
+  </body>
+</html>

@@ -5,3 +5,7 @@ apps/api/drizzle
 *.md
 .claude
 corpus
+.output
+.wxt
+test-results
+playwright-report

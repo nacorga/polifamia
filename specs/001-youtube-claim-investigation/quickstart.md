@@ -27,7 +27,18 @@ curl -X POST localhost:3100/v1/investigations/<id>/feedback -H 'content-type: ap
 curl localhost:3100/openapi.json
 ```
 
-Extensión (S2, pendiente):
+Extensión:
+
+```bash
+pnpm build                                # genera apps/extension/.output/chrome-mv3 (API http://localhost:3100)
+# o WXT_API_URL=https://api.ejemplo pnpm --filter @polifamia/extension build
+pnpm dev:extension                        # alternativa: WXT abre Chrome con la extensión y recarga en caliente
+```
+
+Carga manual: `chrome://extensions` → «Modo de desarrollador» → «Cargar descomprimida» →
+`apps/extension/.output/chrome-mv3`. Los vídeos DEMO usan IDs ficticios, así que en youtube.com real
+`/watch?v=DEMOvideo01` no reproduce nada (el panel debería listar el catálogo DEMO; sin verificar a mano); con cualquier vídeo real se
+ve el flujo «no compatible» + manual. El flujo completo con reproductor está cubierto por `pnpm e2e`.
 
 1. Abrir un vídeo DEMO del catálogo y pulsar el icono → panel «Análisis disponible · DEMO».
 2. Pulsar una afirmación → el vídeo salta al minuto sin pausarse.
@@ -35,7 +46,9 @@ Extensión (S2, pendiente):
 4. Abrir otro vídeo → «Vídeo todavía no compatible» → **Pegar una afirmación**.
 5. «Hay un problema con esta investigación» → confirmación.
 
-Checks: `pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm build`
-(los tests de integración usan `polifamia_test`; `DATABASE_URL_TEST` lo sobrescribe).
+Checks: `pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm build && pnpm e2e`
+(los tests de integración usan `polifamia_test`; `DATABASE_URL_TEST` lo sobrescribe. `pnpm e2e` construye la
+extensión en `.output/chrome-mv3-e2e` apuntando a :3199, recrea `polifamia_e2e`, levanta API + worker DEMO y
+ejecuta Playwright; primera vez: `pnpm --filter @polifamia/extension exec playwright install chromium`).
 
 Modo real (S4): `INVESTIGATION_MODE=real`, `ANTHROPIC_API_KEY`, `FACTCHECK_API_KEY` en el `.env` del servidor.

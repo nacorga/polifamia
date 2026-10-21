@@ -69,24 +69,24 @@ en verde, tareas marcadas `[x]`, notas de gate en `docs/gates.md`, commit en `00
 
 ## Phase 2 — S2: Extensión (D0 spike + D1 UI)
 
-- [ ] T025 WXT + React + Tailwind en `apps/extension`, manifest: `sidePanel`, `storage`, `tabs`; host permissions `*://*.youtube.com/*` y la URL de la API (configurable por `WXT_API_URL`)
-- [ ] T026 `entrypoints/background.ts`: `openPanelOnActionClick`, panel habilitado solo en pestañas YouTube, relay de mensajes tipados por `tabId`
-- [ ] T027 `entrypoints/youtube.content.ts`: `videoId` desde URL, `HTMLVideoElement` (play/pause/seeked/timeupdate con throttle), navegación SPA (`yt-navigate-finish` + observación de URL), `video:seek`; sin leer otra cosa del DOM
-- [ ] T028 `src/lib/chrome-bridge.ts`: hook `useActiveVideo()` con `requestId`, descarta mensajes de otro `videoId/tabId`
-- [ ] T029 `src/lib/api-client.ts`: fetch tipado con contracts, `X-Install-Id` anónimo en `storage.local`, mapping de errores a estados UX
-- [ ] T030 [US1] Máquina de estados UX (los 11 de FR-009) en `src/hooks/usePanelState.ts` con tests
-- [ ] T031 [US1] Vista lista de afirmaciones: minuto, literal, insignia DEMO, clic → seek; foco/teclado/aria
-- [ ] T032 [US1] Estados `unsupported_video`, `transcript_unavailable`, `preparing_claims`, lista vacía, `error` con reintento
-- [ ] T033 [US2] Botón Investigar + polling TanStack Query (backoff 1→2→4 s máx., parada en terminal, cancelación al cambiar de vídeo)
-- [ ] T034 [US2] Vista resultado: literal → qué muestran las evidencias → contexto/limitaciones → fuentes (URL, publicador, fechas, fragmento, procedencia), «comprobado el…», caducidad, volver al minuto
-- [ ] T035 [US3] «Pegar una afirmación» con aviso de qué se envía y a quién (FR-012), sin timestamp
-- [ ] T036 [US4] Formulario «Hay un problema con esta investigación»
-- [ ] T037 Eventos `panel_opened`, `investigation_requested`, `result_opened`, `source_clicked`, `feedback_sent`
-- [ ] T038 Estados `rate_limited`, `source_unavailable`, `insufficient_evidence` con copy neutral
-- [ ] T039 Fixture E2E: página de vídeo servida vía `context.route` para `https://www.youtube.com/watch?v=*` con `<video>` local y navegación SPA simulada
-- [ ] T040 Playwright E2E: lista + seek ≤2 s, cambio de vídeo sin datos cruzados, no compatible + manual, investigación DEMO, API caída
-- [ ] T041 Spike D0 documentado en `docs/d0-viability.md`: capacidades verificadas (sidePanel, videoId, currentTime, SPA) y restricciones YouTube/Chrome Web Store
-- [ ] T042 Actualizar `docs/gates.md` (G1 completo) y `quickstart.md`
+- [x] T025 WXT + React + Tailwind en `apps/extension`, manifest: `sidePanel`, `storage`, `tabs`; host permissions `*://*.youtube.com/*` y la URL de la API (configurable por `WXT_API_URL`)
+- [x] T026 `entrypoints/background.ts`: `openPanelOnActionClick`, panel habilitado solo en pestañas YouTube, relay de mensajes tipados por `tabId`
+- [x] T027 `entrypoints/youtube.content.ts`: `videoId` desde URL, `HTMLVideoElement` (play/pause/seeked/timeupdate con throttle), navegación SPA (`yt-navigate-finish` + observación de URL), `video:seek`; sin leer otra cosa del DOM
+- [x] T028 `src/lib/chrome-bridge.ts`: hook `useActiveVideo()` con `requestId`, descarta mensajes de otro `videoId/tabId`
+- [x] T029 `src/lib/api-client.ts`: fetch tipado con contracts, `X-Install-Id` anónimo en `storage.local`, mapping de errores a estados UX
+- [x] T030 [US1] Máquina de estados UX (los 11 de FR-009) en `src/hooks/usePanelState.ts` con tests
+- [x] T031 [US1] Vista lista de afirmaciones: minuto, literal, insignia DEMO, clic → seek; foco/teclado/aria
+- [x] T032 [US1] Estados `unsupported_video`, `transcript_unavailable`, `preparing_claims`, lista vacía, `error` con reintento
+- [x] T033 [US2] Botón Investigar + polling TanStack Query (backoff 1→2→4 s máx., parada en terminal, cancelación al cambiar de vídeo)
+- [x] T034 [US2] Vista resultado: literal → qué muestran las evidencias → contexto/limitaciones → fuentes (URL, publicador, fechas, fragmento, procedencia), «comprobado el…», caducidad, volver al minuto
+- [x] T035 [US3] «Pegar una afirmación» con aviso de qué se envía y a quién (FR-012), sin timestamp
+- [x] T036 [US4] Formulario «Hay un problema con esta investigación»
+- [x] T037 Eventos `panel_opened`, `investigation_requested`, `result_opened`, `source_clicked`, `feedback_sent`
+- [x] T038 Estados `rate_limited`, `source_unavailable`, `insufficient_evidence` con copy neutral
+- [x] T039 Fixture E2E: página de vídeo servida vía `context.route` para `https://www.youtube.com/watch?v=*` con `<video>` local y navegación SPA simulada
+- [x] T040 Playwright E2E: lista + seek ≤2 s, cambio de vídeo sin datos cruzados, no compatible + manual, investigación DEMO, API caída
+- [x] T041 Spike D0 documentado en `docs/d0-viability.md`: capacidades verificadas (sidePanel, videoId, currentTime, SPA) y restricciones YouTube/Chrome Web Store
+- [x] T042 Actualizar `docs/gates.md` (G1 completo) y `quickstart.md`
 
 **Checkpoint**: Gate G1 — experiencia completa DEMO, sincronizada, sin cruces.
 

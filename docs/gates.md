@@ -30,7 +30,27 @@ Evidencia (2026-10-21):
   manual 202 → manual corto 400.
 - Modo `demo` nunca emite `SUPPORTED`/`CONTRADICTED`; todo resultado y evidencia lleva `[DEMO]`.
 
-### Extensión (S2) · pendiente
+### Extensión (S2) · GO técnico (pendiente prueba manual en youtube.com real)
+
+Evidencia (2026-10-21):
+
+- `pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm build && pnpm e2e` en verde.
+  Unit extensión 9 (máquina de estados UX y backoff de polling). E2E 7 (Playwright, Chromium + extensión MV3,
+  API + worker reales en modo DEMO sobre `polifamia_e2e`):
+  1. vídeo del catálogo: lista DEMO, salto al minuto ≤2 s y estado de pausa sin cambios;
+  2. navegación SPA entre `DEMOvideo01` → `DEMOvideo02` sin afirmaciones cruzadas;
+  3. investigar: progreso → resultado DEMO en el orden Afirmación → Evidencias → Contexto → Fuentes,
+     «comprobado el…», «volver al minuto», reporte de problema;
+  4. resultado tardío no aparece tras cambiar de vídeo (verificado que el test falla si se quita el reinicio
+     de estado por vídeo);
+  5. vídeo no compatible → «Pegar una afirmación» (validación de longitud, aviso de envío, sin minuto);
+  6. API caída → error recuperable → «Reintentar»;
+  7. panel lateral abre desde el icono y solo está habilitado en YouTube.
+- Eventos registrados durante E2E: `panel_opened`, `investigation_requested`, `result_opened`, `feedback_sent`.
+- Detalle técnico y restricciones: `docs/d0-viability.md`.
+
+Pendiente para cerrar G1: prueba manual de instalación en Chrome estable sobre youtube.com real (fuera del
+catálogo DEMO, que usa IDs ficticios).
 
 ## G2 — Motor de afirmaciones (D2) · pendiente
 ## G3 — Motor de evidencias (D3) · pendiente
