@@ -1,6 +1,7 @@
 # Release y rollback (beta técnica)
 
-Plantilla de despliegue: `infra/digitalocean-app.yaml` (API + worker + PostgreSQL gestionado). **No desplegado.**
+Plantilla de despliegue: `infra/digitalocean-app.yaml` (API + worker + PostgreSQL gestionado, imagen `Dockerfile`).
+Primer despliegue paso a paso: `docs/deploy.md`. Ficha de la Store: `docs/store-listing.md`.
 
 ## Release
 
@@ -8,9 +9,9 @@ Plantilla de despliegue: `infra/digitalocean-app.yaml` (API + worker + PostgreSQ
 2. Revisar migraciones nuevas en `apps/api/drizzle/` (SQL legible; nada destructivo sin plan).
 3. Desplegar: el job `PRE_DEPLOY` aplica migraciones; después API y worker.
 4. Smoke: `GET /health`, availability de un vídeo del catálogo, una investigación de prueba.
-5. Extensión: `WXT_API_URL=https://<api> pnpm --filter @polifamia/extension build && pnpm --filter @polifamia/extension zip`;
+5. Extensión: `WXT_API_URL=https://<api> pnpm zip:extension`;
    el build falla si el bundle contiene secretos o permisos fuera de lo esperado (`scripts/check-bundle.mjs`).
-   Distribución beta cerrada: carga descomprimida o Chrome Web Store como «no listada» tras revisión.
+   Distribución beta cerrada: carga descomprimida o Chrome Web Store como «privada» tras revisión.
 
 ## Rollback
 

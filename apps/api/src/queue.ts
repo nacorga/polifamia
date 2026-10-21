@@ -1,4 +1,5 @@
 import { PgBoss } from 'pg-boss';
+import { pgConnection } from './db/client.js';
 
 export const INVESTIGATE_QUEUE = 'investigate';
 
@@ -8,7 +9,7 @@ export interface InvestigateJob {
 }
 
 export async function startBoss(url: string, retryLimit: number, timeoutMs: number): Promise<PgBoss> {
-  const boss = new PgBoss(url);
+  const boss = new PgBoss(pgConnection(url));
   boss.on('error', (err) => console.error(err));
   await boss.start();
   // `short`: como mucho un job en cola por singletonKey (= cacheKey).
