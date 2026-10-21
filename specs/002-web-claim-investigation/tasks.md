@@ -48,24 +48,24 @@ en verde (S3: también `pnpm e2e`), tareas marcadas `[x]`, notas en `docs/gates.
 
 ### Foundational
 
-- [ ] T010 `apps/extension/wxt.config.ts`: `permissions` = `activeTab, contextMenus, sidePanel, storage`; descripción del manifiesto ampliada a artículos; `apps/extension/scripts/check-bundle.mjs` y `check-bundle.test.ts` exigen esa lista (siguen rechazando `tabs` y hosts nuevos) (SC-003)
-- [ ] T011 [P] `apps/extension/src/lib/selection.ts` (sin `#imports`): `selectionFromClick(info, tab)` → `{text, url: origin+pathname, domain sin www, title, at}` o `{unsupported: true}` para no http(s) o rutas `.pdf`; `selectionKey(tabId)`; tests `selection.test.ts` (query y fragmento eliminados, SC-006; `chrome://`, `file://`, PDF; recorte de texto)
+- [x] T010 `apps/extension/wxt.config.ts`: `permissions` = `activeTab, contextMenus, sidePanel, storage`; descripción del manifiesto ampliada a artículos; `apps/extension/scripts/check-bundle.mjs` y `check-bundle.test.ts` exigen esa lista (siguen rechazando `tabs` y hosts nuevos) (SC-003)
+- [x] T011 [P] `apps/extension/src/lib/selection.ts` (sin `#imports`): `selectionFromClick(info, tab)` → `{text, url: origin+pathname, domain sin www, title, at}` o `{unsupported: true}` para no http(s) o rutas `.pdf`; `selectionKey(tabId)`; tests `selection.test.ts` (query y fragmento eliminados, SC-006; `chrome://`, `file://`, PDF; recorte de texto)
 
 ### US1 — Investigar una frase seleccionada (P1)
 
-- [ ] T012 [US1] `apps/extension/entrypoints/background.ts`: quitar `syncPanel` y sus listeners; `contextMenus.create` («Investigar esta afirmación», `contexts: ['selection']`, `documentUrlPatterns` http/https) en `onInstalled`; `onClicked`: `sidePanel.open({tabId})` antes de cualquier `await`, luego `storage.session.set(selectionKey, selectionFromClick(...))`
-- [ ] T013 [US1] `apps/extension/src/lib/chrome-bridge.ts`: `usePageSelection(tabId)` (lee la clave, escucha `storage.session.onChanged`, `clear()`)
-- [ ] T014 [US1] `apps/extension/entrypoints/sidepanel/App.tsx`: una selección abre la vista manual prellenada (con `key` por `at` para no mezclar resultados tardíos); `start()` envía `origin: 'web_selection'`; la vista de resultado recibe la procedencia local; `selection_investigated` tras crear; borra la selección al enviar/cancelar; selección `unsupported` → aviso «Esta página no es compatible»
-- [ ] T015 [P] [US1] `apps/extension/src/components/InvestigationView.tsx`: prop opcional de procedencia local («texto seleccionado por ti en <medio>» / «Texto aportado por ti»), usada siempre que la vista viene de texto libre, sin «Volver al minuto»; `FAILURE_COPY.not_checkable` sin reintento
+- [x] T012 [US1] `apps/extension/entrypoints/background.ts`: quitar `syncPanel` y sus listeners; `contextMenus.create` («Investigar esta afirmación», `contexts: ['selection']`, `documentUrlPatterns` http/https) en `onInstalled`; `onClicked`: `sidePanel.open({tabId})` antes de cualquier `await`, luego `storage.session.set(selectionKey, selectionFromClick(...))`
+- [x] T013 [US1] `apps/extension/src/lib/chrome-bridge.ts`: `usePageSelection(tabId)` (lee la clave, escucha `storage.session.onChanged`, `clear()`)
+- [x] T014 [US1] `apps/extension/entrypoints/sidepanel/App.tsx`: una selección abre la vista manual prellenada (con `key` por `at` para no mezclar resultados tardíos); `start()` envía `origin: 'web_selection'`; la vista de resultado recibe la procedencia local; `selection_investigated` tras crear; borra la selección al enviar/cancelar; selección `unsupported` → aviso «Esta página no es compatible»
+- [x] T015 [P] [US1] `apps/extension/src/components/InvestigationView.tsx`: prop opcional de procedencia local («texto seleccionado por ti en <medio>» / «Texto aportado por ti»), usada siempre que la vista viene de texto libre, sin «Volver al minuto»; `FAILURE_COPY.not_checkable` sin reintento
 
 ### US3 — Revisar la selección (P2)
 
-- [ ] T016 [P] [US3] `apps/extension/src/components/ManualClaim.tsx`: `initialText`; línea de origen (medio + dirección sin parámetros, «no se envía»); aviso «solo se envía el texto»; sugerencia de recortar a una sola afirmación; límites 10..500 como en 001; error `not_checkable` mostrado como no verificable
+- [x] T016 [P] [US3] `apps/extension/src/components/ManualClaim.tsx`: `initialText`; línea de origen (medio + dirección sin parámetros, «no se envía»); aviso «solo se envía el texto»; sugerencia de recortar a una sola afirmación; límites 10..500 como en 001; error `not_checkable` mostrado como no verificable
 
 ### US4 — Panel en cualquier página (P2)
 
-- [ ] T017 [US4] `App.tsx`: estado `idle` (pestaña sin vídeo) con «Selecciona una frase y elige Investigar esta afirmación» + «Pegar una afirmación»; cabecera del panel sin referencia exclusiva a vídeo; flujo de vídeo sin cambios (FR-015)
-- [ ] T018 Tests unit de la extensión en verde (`usePanelState.test.ts` intacto) y `docs/gates.md` G5 con evidencia S2
+- [x] T017 [US4] `App.tsx`: estado `idle` (pestaña sin vídeo) con «Selecciona una frase y elige Investigar esta afirmación» + «Pegar una afirmación»; cabecera del panel sin referencia exclusiva a vídeo; flujo de vídeo sin cambios (FR-015)
+- [x] T018 Tests unit de la extensión en verde (`usePanelState.test.ts` intacto) y `docs/gates.md` G5 con evidencia S2
 
 **Checkpoint**: la extensión compila con los permisos nuevos y el flujo de selección funciona en desarrollo.
 

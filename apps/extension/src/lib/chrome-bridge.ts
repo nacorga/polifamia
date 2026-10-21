@@ -1,6 +1,7 @@
 import { browser } from '#imports';
 import { ContentMessage, SeekResult, YoutubeId, type VideoState } from '@polifamia/contracts';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { selectionKey, type PageSelection } from './selection';
 
 export type ActiveVideo = Omit<VideoState, 'type'>;
 
@@ -76,6 +77,36 @@ export function useActiveVideo(): ActiveVideo | null {
   }, []);
 
   return video;
+}
+
+/**
+ * Última selección enviada desde el menú contextual para la pestaña (`storage.session`, escrita por el
+ * background). `clear()` la borra del almacenamiento pero el panel la conserva mientras siga en la pestaña.
+ */
+export function usePageSelection(tabId: number | null) {
+  // Se guarda junto a su pestaña: al cambiar de pestaña nunca se muestra la selección de otra.
+  const [state, setState] = useState<{ tabId: number; value: PageSelection } | null>(null);
+  useEffect(() => {
+    if (tabId === null) return;
+    const key = selectionKey(tabId);
+    let alive = true;
+    void browser.storage.session.get(key).then((r) => {
+      if (alive && r[key]) setState({ tabId, value: r[key] as PageSelection });
+    });
+    const onChanged = (changes: Record<string, { newValue?: unknown }>, area: string) => {
+      const next = area === 'session' ? changes[key]?.newValue : undefined;
+      if (next) setState({ tabId, value: next as PageSelection });
+    };
+    browser.storage.onChanged.addListener(onChanged);
+    return () => {
+      alive = false;
+      browser.storage.onChanged.removeListener(onChanged);
+    };
+  }, [tabId]);
+  const clear = useCallback(() => {
+    if (tabId !== null) void browser.storage.session.remove(selectionKey(tabId));
+  }, [tabId]);
+  return { selection: state && state.tabId === tabId ? state.value : null, clear };
 }
 
 /** Desplaza el reproductor; `false` si el vídeo ya no es el mismo o no hay content script. */

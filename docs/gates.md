@@ -196,6 +196,24 @@ Evidencia (2026-10-21):
   Cambia también el texto pegado de 001 en modo real (antes se investigaba como hecho; constitución II).
 - Límite conocido: en DEMO, una opinión sin coincidencia en el catálogo no se detecta.
 
+### Extensión (S2) · GO técnico (pendiente E2E de S3 y prueba manual del menú)
+
+Evidencia (2026-10-21):
+
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build && pnpm format:check` en verde. Unit extensión 20 (+8:
+  `selectionFromClick` quita query y fragmento, marca `chrome://`, `file://` y PDF como no compatibles; guardia de
+  permisos con `activeTab, contextMenus, sidePanel, storage`, `tabs` sigue rechazado).
+- Manifest: permisos `activeTab, contextMenus, sidePanel, storage`; host permissions sin cambios (YouTube + API);
+  content script solo en YouTube. Bundle check en verde en `chrome-mv3` y `chrome-mv3-e2e`.
+- Background: menú «Investigar esta afirmación» solo sobre selección en http(s); `sidePanel.open` antes de cualquier
+  `await`; la selección (texto, origen+ruta, dominio, título) va a `storage.session` y se borra al enviar, cancelar o
+  cerrar la pestaña. Panel disponible en cualquier pestaña.
+- Panel: selección → vista prellenada con medio y dirección «no se envían»; envío `{manualClaim, origin, idempotencyKey}`;
+  resultado con la afirmación local («Texto seleccionado por ti en <medio>», sin minuto aunque la API la resuelva a un
+  vídeo del catálogo); `not_checkable` sin reintento; evento `selection_investigated`; guía US4 en pestañas sin vídeo.
+- E2E existentes: 16/17 en verde. Falla, como estaba previsto, «panel lateral: … solo está habilitado en YouTube»
+  (`other.enabled` es ahora `true` por diseño, R2); se reescribe en S3 (T023).
+
 ## Definition of Done (PRD §14)
 
 | # | Criterio | Estado | Evidencia / pendiente |
