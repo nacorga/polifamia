@@ -1,0 +1,33 @@
+name: Propose a source
+description: Suggest a new primary source or data series for investigations.
+labels: [source]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Only sources that meet the criteria in [docs/governance.md](https://github.com/nacorga/polifamia/blob/main/docs/governance.md#criteria-for-adding-a-source) are accepted.
+  - type: input
+    id: source
+    attributes:
+      label: Body and resource
+      placeholder: 'INE · series EPA452434 (unemployment rate)'
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: Data or API URL
+    validations:
+      required: true
+  - type: input
+    id: terms
+    attributes:
+      label: Reuse terms (URL)
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Which claims it would make it possible to investigate
+    validations:
+      required: true

@@ -1,47 +1,46 @@
 # Polifamia
 
-> **English:** Polifamia is a Chrome extension that lets you investigate claims in Spanish political speeches on
-> YouTube against primary sources (INE, BOE, fact-checks) without leaving the video. Conclusions are decided by
-> deterministic code, never by the LLM, and every result shows its evidence and its limits. Early MVP, not yet
-> distributed. Docs are in Spanish; issues and PRs in English are welcome. Licensed under AGPL-3.0-or-later.
+Chrome extension to investigate claims made in Spanish political speeches on YouTube against verifiable evidence,
+without leaving the video. **We don't tell users what to think**: we show what was claimed, which sources exist,
+what they actually prove and what remains unproven.
 
-Extensión de Chrome que permite investigar afirmaciones de discursos políticos en YouTube con evidencia
-verificable, sin salir del vídeo. **No le decimos al usuario qué pensar**: mostramos qué se afirmó, qué fuentes
-hay, qué prueban y qué queda sin probar.
+Status: **P0 MVP implemented (D0–D4) and verified locally; not distributed.** Human gates (legal, dataset, audit,
+users) are still open: see [`docs/gates.md`](docs/gates.md).
 
-Estado: **MVP P0 implementado (D0–D4) y verificado en local; no distribuido.** Los gates humanos (legal,
-dataset, auditoría, usuarios) siguen abiertos: ver [`docs/gates.md`](docs/gates.md).
+> **Language.** The product targets Spanish speakers (Spanish politics, INE and BOE sources), so the product and
+> design docs (PRD, specs, ADRs, constitution, gates) are in Spanish. Issues and pull requests are welcome in
+> English or Spanish.
 
-## Arquitectura
+## Architecture
 
 ```text
-YouTube ── content script (videoId, tiempo, seek) ── side panel React ──HTTPS──▶ API NestJS
+YouTube ── content script (videoId, time, seek) ── React side panel ──HTTPS──▶ NestJS API
                                                                                  │      │
                                                                        PostgreSQL ◀─────┘ pg-boss
                                                                                  ▲      │
-                                                                     evidencias  └── worker
+                                                                      evidence   └── worker
                                                                                         │
-                                              INE Tempus3 · corpus BOE · Fact Check Tools · LLM (Anthropic)
+                                              INE Tempus3 · BOE corpus · Fact Check Tools · LLM (Anthropic)
 ```
 
-| Ruta | Qué es |
+| Path | What it is |
 |---|---|
-| `apps/extension` | WXT + React + Tailwind, MV3. Permisos: `sidePanel`, `storage`, YouTube y la API |
-| `apps/api` | NestJS REST, Drizzle (migraciones en `drizzle/`), worker pg-boss en `src/worker` |
-| `packages/contracts` | Schemas Zod compartidos: API, mensajes de la extensión, enums |
-| `packages/investigation` | Extracción y selección de claims, política de evidencia, stats, síntesis con citas validadas |
-| `packages/connectors` | `safe-fetch` (SSRF), INE, Fact Check Tools, corpus, comprobación de enlaces |
-| `packages/evaluation` | Datasets JSONL y métricas por etapa |
-| `scripts/import-transcripts` | CLI de ingesta SRT/VTT con `rights.json` obligatorio y extracción de claims |
-| `corpus/` | Vídeos DEMO (ficticios) y documentos institucionales autorizados |
-| `infra/` | Docker Compose (PostgreSQL) y plantilla de DigitalOcean App Platform |
+| `apps/extension` | WXT + React + Tailwind, MV3. Permissions: `sidePanel`, `storage`, YouTube and the API |
+| `apps/api` | NestJS REST, Drizzle (migrations in `drizzle/`), pg-boss worker in `src/worker` |
+| `packages/contracts` | Shared Zod schemas: API, extension messages, enums |
+| `packages/investigation` | Claim extraction and selection, evidence policy, stats, synthesis with validated citations |
+| `packages/connectors` | `safe-fetch` (SSRF), INE, Fact Check Tools, corpus, link checks |
+| `packages/evaluation` | JSONL datasets and per-stage metrics |
+| `scripts/import-transcripts` | SRT/VTT ingestion CLI with mandatory `rights.json`, and claim extraction |
+| `corpus/` | DEMO (fictional) videos and authorised institutional documents |
+| `infra/` | Docker Compose (PostgreSQL) and DigitalOcean App Platform template |
 
-Principios no negociables: [`.specify/memory/constitution.md`](.specify/memory/constitution.md).
-La conclusión la decide código determinista, nunca el LLM ([ADR 0002](docs/adr/0002-politica-de-evidencia.md)).
+Non-negotiable principles: [`.specify/memory/constitution.md`](.specify/memory/constitution.md).
+Conclusions are decided by deterministic code, never by the LLM ([ADR 0002](docs/adr/0002-politica-de-evidencia.md)).
 
-## Desarrollo
+## Development
 
-Requiere Node ≥22.12, pnpm y Docker.
+Requires Node ≥22.12, pnpm and Docker.
 
 ```bash
 pnpm install
@@ -49,40 +48,40 @@ pnpm db:up && cp .env.example .env && pnpm db:migrate
 pnpm import:transcripts corpus/videos
 pnpm dev:api        # :3100
 pnpm dev:worker
-pnpm build          # extensión en apps/extension/.output/chrome-mv3 → chrome://extensions → «Cargar descomprimida»
+pnpm build          # extension in apps/extension/.output/chrome-mv3 → chrome://extensions → "Load unpacked"
 ```
 
 Checks: `pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm build && pnpm e2e`.
 
-Modo real: `INVESTIGATION_MODE=real` y `ANTHROPIC_API_KEY` (y opcional `FACTCHECK_API_KEY`) en el `.env` del
-servidor. Sin clave, cada investigación termina `FAILED/no_llm_key`; nunca se inventa un resultado.
+Real mode: `INVESTIGATION_MODE=real` and `ANTHROPIC_API_KEY` (optionally `FACTCHECK_API_KEY`) in the server `.env`.
+Without a key, every investigation ends as `FAILED/no_llm_key`; a result is never made up.
 
-Guía completa: [`specs/001-youtube-claim-investigation/quickstart.md`](specs/001-youtube-claim-investigation/quickstart.md).
+Full guide (Spanish): [`specs/001-youtube-claim-investigation/quickstart.md`](specs/001-youtube-claim-investigation/quickstart.md).
 
-## Documentación
+## Documentation
 
-- Producto: [`prd.md`](prd.md) · Spec-kit: [`specs/001-youtube-claim-investigation/`](specs/001-youtube-claim-investigation/)
-- Gates y Definition of Done: [`docs/gates.md`](docs/gates.md) · Viabilidad D0: [`docs/d0-viability.md`](docs/d0-viability.md)
-- Gobernanza y neutralidad: [`docs/governance.md`](docs/governance.md)
-- Privacidad: [`docs/privacy.md`](docs/privacy.md) · Release/rollback: [`docs/release.md`](docs/release.md) · ADRs: [`docs/adr/`](docs/adr/)
+- Product: [`prd.md`](prd.md) · Spec-kit: [`specs/001-youtube-claim-investigation/`](specs/001-youtube-claim-investigation/)
+- Gates and Definition of Done: [`docs/gates.md`](docs/gates.md) · D0 viability: [`docs/d0-viability.md`](docs/d0-viability.md)
+- Governance and neutrality: [`docs/governance.md`](docs/governance.md)
+- Privacy: [`docs/privacy.md`](docs/privacy.md) · Release/rollback: [`docs/release.md`](docs/release.md) · ADRs: [`docs/adr/`](docs/adr/)
 
-## Estado de gates
+## Gate status
 
-| Gate | Estado |
+| Gate | Status |
 |---|---|
-| G0 legal y contenido | Pendiente (humano): solo 2 vídeos DEMO |
-| G1 vertical slice | GO técnico; falta prueba manual en youtube.com real |
-| G2 afirmaciones | ITERAR: falta eval con clave LLM y dataset revisado por 2 personas |
-| G3 evidencias | ITERAR: falta eval con clave, fixture real de Fact Check y auditoría humana |
-| G4 beta técnica | GO técnico local; no distribuir hasta cerrar G0–G3 y privacidad |
-| V1–V3 | No iniciados |
+| G0 legal and content | Pending (human): only 2 DEMO videos |
+| G1 vertical slice | Technical GO; manual test on real youtube.com pending |
+| G2 claims | ITERATE: eval with an LLM key and a dataset reviewed by 2 people pending |
+| G3 evidence | ITERATE: eval with a key, real Fact Check fixture and human audit pending |
+| G4 technical beta | Local technical GO; do not distribute until G0–G3 and privacy are closed |
+| V1–V3 | Not started |
 
-## Contribuir
+## Contributing
 
-Lee [`CONTRIBUTING.md`](CONTRIBUTING.md) y el [Código de Conducta](CODE_OF_CONDUCT.md). Para errores en un resultado,
-usa la plantilla «Resultado incorrecto»; las vulnerabilidades se reportan en privado ([`SECURITY.md`](SECURITY.md)).
+Read [`CONTRIBUTING.md`](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md). To report a wrong result, use
+the "Incorrect result" issue template; report vulnerabilities privately ([`SECURITY.md`](SECURITY.md)).
 
-## Licencia
+## License
 
-Código bajo [AGPL-3.0-or-later](LICENSE): si ofreces una versión modificada como servicio, debes publicar sus cambios.
-Datos y fixtures según [`DATA-LICENSE.md`](DATA-LICENSE.md).
+Code under [AGPL-3.0-or-later](LICENSE): if you offer a modified version as a network service, you must publish your
+changes. Data and fixtures as described in [`DATA-LICENSE.md`](DATA-LICENSE.md).

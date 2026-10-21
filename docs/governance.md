@@ -1,47 +1,47 @@
-# Gobernanza y neutralidad
+# Governance and neutrality
 
-Polifamia muestra qué se afirmó, qué fuentes hay y qué prueban. Que se pueda auditar es parte del producto: este
-documento explica quién decide y con qué criterios.
+Polifamia shows what was claimed, which sources exist and what they prove. Being auditable is part of the product:
+this document explains who decides and by which criteria.
 
-## Quién decide
+## Who decides
 
-Mantiene el proyecto [@nacorga](https://github.com/nacorga), que decide los merges, la incorporación de fuentes y las
-enmiendas a la [constitución](../.specify/memory/constitution.md). Las decisiones que cambian el comportamiento de las
-investigaciones se registran como ADR en [`docs/adr/`](adr/) para que el razonamiento quede a la vista.
+The project is maintained by [@nacorga](https://github.com/nacorga), who decides merges, new sources and amendments to
+the [constitution](../.specify/memory/constitution.md). Decisions that change how investigations behave are recorded
+as ADRs in [`docs/adr/`](adr/) so the reasoning stays public.
 
-## Criterios para añadir una fuente
+## Criteria for adding a source
 
-Una fuente solo puede sostener `SUPPORTED`/`CONTRADICTED` si cumple todo esto:
+A source can only support `SUPPORTED`/`CONTRADICTED` if it meets all of these:
 
-1. **Primaria e institucional**: publica el dato original (INE, BOE, AIReF…), no un resumen de medios.
-2. **Reutilizable**: tiene condiciones de reutilización documentadas, que se añaden a
-   [`DATA-LICENSE.md`](../DATA-LICENSE.md).
-3. **Determinista**: un conector que consulta un localizador exacto (serie, periodo, artículo) por `safe-fetch`
-   con el host en la whitelist, nunca búsqueda libre.
-4. **Probada**: una respuesta real grabada como fixture y tests del conector.
+1. **Primary and institutional**: it publishes the original data (INE, BOE, AIReF…), not a media summary.
+2. **Reusable**: it has documented reuse terms, which are added to [`DATA-LICENSE.md`](../DATA-LICENSE.md).
+3. **Deterministic**: a connector queries an exact locator (series, period, article) through `safe-fetch` with the
+   host on the allowlist, never an open search.
+4. **Tested**: a real response recorded as a fixture, plus connector tests.
 
-Dónde se registra: las series del INE en `packages/connectors/src/ine/registry.ts` y los documentos institucionales
-en `corpus/documents/` (`pnpm --filter @polifamia/connectors record:fixtures`). Cualquier otro origen necesita un ADR.
-Las verificaciones de terceros (Fact Check Tools) cuentan como contexto, nunca como certificación
+Where it is registered: INE series in `packages/connectors/src/ine/registry.ts` and institutional documents in
+`corpus/documents/` (`pnpm --filter @polifamia/connectors record:fixtures`). Any other origin needs an ADR.
+Third-party fact-checks (Fact Check Tools) count as context, never as certification
 ([ADR 0002](adr/0002-politica-de-evidencia.md)).
 
-Para proponer una fuente, usa la plantilla [«Proponer fuente»](https://github.com/nacorga/polifamia/issues/new?template=proponer-fuente.yml).
+To propose a source, use the ["Propose a source"](https://github.com/nacorga/polifamia/issues/new?template=propose-source.yml)
+template.
 
-## Cómo se disputa un resultado
+## Disputing a result
 
-- Desde la extensión, con «Hay un problema con esta investigación».
-- En GitHub, con la plantilla [«Resultado incorrecto»](https://github.com/nacorga/polifamia/issues/new?template=resultado-incorrecto.yml),
-  indicando la afirmación, la evidencia citada y qué falla.
+- From the extension, with "Hay un problema con esta investigación" ("There is a problem with this investigation").
+- On GitHub, with the ["Incorrect result"](https://github.com/nacorga/polifamia/issues/new?template=incorrect-result.yml)
+  template, stating the claim, the cited evidence and what is wrong.
 
-Si el error se debe a datos, código o política, se corrige y se genera una **versión nueva** de la investigación.
-Las anteriores no se borran: quedan marcadas como sustituidas. Un desacuerdo sin evidencia nueva no cambia un
-resultado.
+If the error comes from data, code or policy, it is fixed and a **new version** of the investigation is generated.
+Previous versions are not deleted: they are marked as superseded. A disagreement without new evidence does not change
+a result.
 
-## Lo que nunca se acepta
+## Never accepted
 
-- Lógica que dependa del orador, del partido o de la identidad política, o rankings y notas de políticos.
-- Que el LLM decida la conclusión o introduzca URLs, citas o cifras que no estén en la evidencia recuperada.
-- Scraping de YouTube o contenido sin derechos documentados.
-- Datos simulados sin la etiqueta DEMO.
-- Financiación o colaboraciones que condicionen qué se investiga o cómo se presenta. Si existe alguna, se declarará
-  en este documento.
+- Logic that depends on the speaker, party or political identity, or rankings and scores of politicians.
+- The LLM deciding the conclusion or introducing URLs, citations or figures that are not in the retrieved evidence.
+- YouTube scraping or content without documented rights.
+- Simulated data without the DEMO label.
+- Funding or partnerships that influence what is investigated or how it is presented. Any funding or partnership will
+  be declared in this document.
