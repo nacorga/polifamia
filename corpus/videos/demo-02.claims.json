@@ -1,0 +1,43 @@
+[
+  {
+    "literal": "La deuda pública cerró el año pasado por encima del 100 % del PIB.",
+    "claimType": "statistic",
+    "normalized": { "metric": "deuda pública", "territory": "España", "period": "año anterior a la intervención", "unit": "% del PIB", "value": 100, "comparison": "por encima de" },
+    "speaker": "Ponente B (ficticio)",
+    "rank": 1
+  },
+  {
+    "literal": "El déficit se redujo hasta el 3,5 % del PIB, como indicó la AIReF.",
+    "claimType": "statistic",
+    "normalized": { "metric": "déficit público", "territory": "España", "unit": "% del PIB", "value": 3.5 },
+    "declaredSource": "AIReF",
+    "speaker": "Ponente B (ficticio)",
+    "rank": 2
+  },
+  {
+    "literal": "El PIB de España creció un 2,5 % en 2023.",
+    "claimType": "statistic",
+    "normalized": { "metric": "PIB variación anual", "territory": "España", "period": "2023", "unit": "%", "value": 2.5 },
+    "speaker": "Ponente B (ficticio)",
+    "rank": 3
+  },
+  {
+    "literal": "El gasto en pensiones supone alrededor de 190.000 millones de euros al año.",
+    "claimType": "statistic",
+    "normalized": { "metric": "gasto en pensiones", "territory": "España", "unit": "millones de euros/año", "value": 190000 },
+    "speaker": "Ponente B (ficticio)",
+    "rank": 4
+  },
+  {
+    "literal": "Esta política fiscal es injusta para las familias.",
+    "claimType": "opinion",
+    "speaker": "Ponente B (ficticio)",
+    "rank": 5
+  },
+  {
+    "literal": "en dos años no habrá dinero para las pensiones",
+    "claimType": "prediction",
+    "speaker": "Ponente B (ficticio)",
+    "rank": 6
+  }
+]

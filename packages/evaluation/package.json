@@ -1,0 +1,24 @@
+{
+  "name": "@polifamia/evaluation",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run",
+    "eval:extraction": "tsc -b && node --env-file-if-exists=../../.env dist/eval-extraction.js",
+    "eval:investigation": "tsc -b && node --env-file-if-exists=../../.env dist/eval-investigation.js"
+  },
+  "dependencies": {
+    "@polifamia/connectors": "workspace:*",
+    "@polifamia/contracts": "workspace:*",
+    "@polifamia/investigation": "workspace:*",
+    "zod": "4.6.7"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "_recorded": {
+    "url": "https://servicios.ine.es/wstempus/js/ES/DATOS_SERIE/EPA452434?date=20240701:20240930",
+    "fetchedAt": "2026-10-21T08:32:06.430Z",
+    "status": 200
+  },
+  "body": "{\"COD\":\"EPA452434\", \"Nombre\":\"Tasa de paro de la población. Ambos sexos. Total Nacional. Total. \", \"FK_Unidad\":135, \"FK_Escala\":1, \"Data\":[{\"Fecha\":1719784800000, \"FK_TipoDato\":1, \"FK_Periodo\":21, \"Anyo\":2024, \"Valor\":11.21, \"Secreto\":false}\n]\n}\n"
+}

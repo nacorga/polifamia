@@ -1,0 +1,11 @@
+dist
+pnpm-lock.yaml
+apps/api/drizzle
+.specify
+*.md
+.claude
+corpus
+.output
+.wxt
+test-results
+playwright-report

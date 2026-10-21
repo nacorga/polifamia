@@ -1,0 +1,39 @@
+{
+  "name": "polifamia",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.8.1",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "build": "pnpm -r run build",
+    "typecheck": "tsc -b && tsc -p tsconfig.test.json && pnpm --filter @polifamia/extension run typecheck",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "pnpm -r run test",
+    "db:up": "docker compose -f infra/docker-compose.yml up -d --wait",
+    "db:generate": "pnpm --filter @polifamia/api run db:generate",
+    "db:migrate": "pnpm --filter @polifamia/api run db:migrate",
+    "import:transcripts": "pnpm --filter @polifamia/import-transcripts run start",
+    "dev:api": "pnpm --filter @polifamia/api run dev",
+    "dev:worker": "pnpm --filter @polifamia/api run dev:worker",
+    "e2e": "pnpm build && pnpm --filter @polifamia/extension run e2e",
+    "dev:extension": "pnpm --filter @polifamia/contracts run build && pnpm --filter @polifamia/extension run dev",
+    "extract:claims": "pnpm --filter @polifamia/import-transcripts run extract",
+    "eval:extraction": "pnpm --filter @polifamia/evaluation run eval:extraction",
+    "eval:investigation": "pnpm --filter @polifamia/evaluation run eval:investigation"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "26.6.5",
+    "eslint": "10.13.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "globals": "17.13.0",
+    "prettier": "3.9.10",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.0",
+    "vitest": "5.0.5"
+  }
+}

@@ -1,0 +1,57 @@
+# DigitalOcean App Platform — beta cerrada (PRD §10.1). NO desplegado: plantilla para revisión.
+# Crear con `doctl apps create --spec infra/digitalocean-app.yaml` solo tras aprobar coste y gates.
+# Secretos (ANTHROPIC_API_KEY, FACTCHECK_API_KEY) se introducen en la consola como SECRET; nunca en git.
+name: polifamia-beta
+region: fra
+envs:
+  - key: DATABASE_URL
+    scope: RUN_AND_BUILD_TIME
+    value: ${db.DATABASE_URL}
+  - key: INVESTIGATION_MODE
+    value: real
+  - key: DAILY_BUDGET_EUR
+    value: '5'
+  - key: RATE_LIMIT_PER_MINUTE
+    value: '20'
+  - key: ANTHROPIC_API_KEY
+    type: SECRET
+  - key: FACTCHECK_API_KEY
+    type: SECRET
+databases:
+  - name: db
+    engine: PG
+    version: '16'
+    production: true # gestionado, con backups diarios
+jobs:
+  # Migraciones Drizzle revisadas antes de cada despliegue; si fallan, el despliegue se detiene.
+  - name: migrate
+    kind: PRE_DEPLOY
+    github: { repo: nacorga/polifamia, branch: main, deploy_on_push: false }
+    environment_slug: node-js
+    build_command: pnpm install --frozen-lockfile && pnpm --filter "@polifamia/api..." run build
+    run_command: node apps/api/dist/db/migrate.js
+services:
+  - name: api
+    github: { repo: nacorga/polifamia, branch: main, deploy_on_push: false }
+    environment_slug: node-js
+    build_command: pnpm install --frozen-lockfile && pnpm --filter "@polifamia/api..." run build
+    run_command: node apps/api/dist/main.js
+    http_port: 8080
+    instance_count: 1 # rate limit en memoria: una instancia (ver ADR 0004)
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    envs:
+      - key: PORT
+        value: '8080'
+      - key: TRUST_PROXY
+        value: '1'
+    health_check:
+      http_path: /health
+workers:
+  # Proceso persistente pg-boss: investigaciones y purga de retención (no serverless, PRD §10.2).
+  - name: worker
+    github: { repo: nacorga/polifamia, branch: main, deploy_on_push: false }
+    environment_slug: node-js
+    build_command: pnpm install --frozen-lockfile && pnpm --filter "@polifamia/api..." run build
+    run_command: node apps/api/dist/worker/main.js
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-0.5gb

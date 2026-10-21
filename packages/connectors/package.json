@@ -1,0 +1,20 @@
+{
+  "name": "@polifamia/connectors",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run",
+    "record:fixtures": "tsc -b && node dist/record-fixtures.js"
+  },
+  "dependencies": {
+    "zod": "4.6.7"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "files": [],
+  "references": [
+    {
+      "path": "packages/contracts"
+    },
+    {
+      "path": "packages/connectors"
+    },
+    {
+      "path": "packages/investigation"
+    },
+    {
+      "path": "packages/evaluation"
+    },
+    {
+      "path": "apps/api"
+    },
+    {
+      "path": "scripts/import-transcripts"
+    }
+  ]
+}

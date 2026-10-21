@@ -1,0 +1,42 @@
+name: CI
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: polifamia
+          POSTGRES_PASSWORD: polifamia
+          POSTGRES_DB: polifamia_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U polifamia" --health-interval 2s --health-retries 15
+    env:
+      DATABASE_URL: postgres://polifamia:polifamia@localhost:5432/polifamia_test
+      DATABASE_URL_TEST: postgres://polifamia:polifamia@localhost:5432/polifamia_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm format:check
+      # Migraciones: el esquema Drizzle no debe tener cambios sin migración generada.
+      - run: pnpm --filter @polifamia/api exec drizzle-kit check
+      - run: pnpm --filter @polifamia/api exec sh -c 'drizzle-kit generate --name ci-drift-check | grep -q "No schema changes"'
+      - run: pnpm db:migrate
+      - run: pnpm test
+      - run: pnpm build
+      - run: pnpm --filter @polifamia/extension exec playwright install --with-deps chromium
+      - run: pnpm e2e
+        env:
+          DATABASE_URL_ADMIN: postgres://polifamia:polifamia@localhost:5432/polifamia_test
