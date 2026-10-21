@@ -197,3 +197,12 @@ test('panel lateral: se abre con el icono y solo está habilitado en YouTube', a
   expect(result.youtube.enabled).toBe(true);
   expect(result.other.enabled).toBe(false);
 });
+
+test('cerrar panel: el botón × cierra la página del panel', async ({ panel }) => {
+  await expect(panel.getByRole('heading', { name: 'Análisis disponible' })).toBeVisible({
+    timeout: 15_000,
+  });
+  const closed = panel.waitForEvent('close');
+  await panel.getByRole('button', { name: 'Cerrar panel' }).click();
+  await closed;
+});

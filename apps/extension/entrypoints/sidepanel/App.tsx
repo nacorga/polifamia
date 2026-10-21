@@ -23,7 +23,19 @@ export function App() {
   return (
     <div className="space-y-3 p-3">
       <header className="space-y-1 border-b border-line pb-2">
-        <h1 className="text-lg font-semibold">Polifamia</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-lg font-semibold">Polifamia</h1>
+          {/* window.close() en un side panel lo cierra; el icono de la extensión lo vuelve a abrir. */}
+          <button
+            type="button"
+            onClick={() => window.close()}
+            aria-label="Cerrar panel"
+            title="Cerrar panel (se reabre con el icono de la extensión)"
+            className="rounded px-2 text-lg leading-none text-muted hover:text-current focus-visible:outline focus-visible:outline-2"
+          >
+            ×
+          </button>
+        </div>
         <p className="text-xs text-muted">
           Qué se ha afirmado, qué fuentes hay y qué queda sin probar. Solo se envía a {API_HOST} el
           identificador del vídeo y lo que decidas investigar.
