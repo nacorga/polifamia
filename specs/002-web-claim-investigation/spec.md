@@ -18,6 +18,15 @@ vídeos, sin PDFs, redes sociales, análisis de imágenes ni chat general."
 YouTube, la política de evidencia, las conclusiones, la caché, el versionado y el feedback de 001 se mantienen; aquí solo
 se especifica lo nuevo y lo que cambia. Requiere la constitución v1.1.0 (principios II, III y IV ampliados).
 
+## Clarifications
+
+### Session 2026-10-21
+
+- Q: ¿Qué se envía al servicio desde una página, si una investigación reutilizada de la caché la ve cualquier otro usuario? → A: Solo el texto y la marca de origen «selección web». Medio, dirección y título se muestran únicamente en el panel y nunca salen del navegador.
+- Q: ¿Qué significa «la misma afirmación» para reutilizar entre canales? → A: Texto normalizado (mayúsculas, puntuación, espacios) idéntico al de una afirmación del catálogo; la selección se resuelve a esa afirmación. Sin coincidencia aproximada en este MVP.
+- Q: ¿Cómo se detecta que un texto libre es opinión o predicción? → A: Si coincide con una afirmación del catálogo, hereda su verificabilidad (rechazo `NOT_CHECKABLE`). En modo real, la clasificación del motor decide y la investigación termina como no verificable. En modo DEMO, sin coincidencia no se detecta (limitación documentada).
+- Q: ¿Se detecta automáticamente una selección con varias afirmaciones? → A: No; el panel sugiere recortar a una sola. La detección automática queda para después del MVP.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Investigar una frase seleccionada en un artículo (Priority: P1)
@@ -66,20 +75,20 @@ prueba e investigarla; el segundo resultado se reutiliza al instante y coincide 
 ### User Story 3 - Revisar y ajustar la selección antes de enviar (Priority: P2)
 
 Antes de confirmar, la persona puede recortar o corregir el texto seleccionado (por ejemplo, quitar media frase que
-sobra) y decidir no enviar la dirección de la página.
+sobra). El panel deja claro que solo se envía ese texto.
 
 **Why this priority**: Las selecciones suelen ser imprecisas; ajustar el texto mejora la calidad y da control sobre qué se
 comparte.
 
-**Independent Test**: Seleccionar un párrafo largo, recortarlo a la afirmación, desmarcar «incluir dirección de la
-página» y comprobar que solo se envía el texto final.
+**Independent Test**: Seleccionar un párrafo largo, recortarlo a la afirmación y comprobar que la petición contiene solo
+el texto final y la marca de origen, sin medio, dirección ni título.
 
 **Acceptance Scenarios**:
 
 1. **Given** la frase en el panel, **When** se edita, **Then** se investiga el texto editado, que queda registrado como aportado por el usuario.
-2. **Given** la opción de no incluir la dirección, **When** se confirma, **Then** solo se envía el texto y el resultado muestra «texto seleccionado por ti» sin medio.
+2. **Given** el aviso del panel, **When** se confirma, **Then** solo se envía el texto (con la marca «selección web»); medio, dirección y título se muestran en el panel pero no se transmiten.
 3. **Given** un texto vacío, demasiado corto o mayor que el límite, **When** se intenta enviar, **Then** se rechaza con un mensaje claro y la opción de recortar.
-4. **Given** una opinión o predicción, **When** se envía, **Then** se marca `NOT_CHECKABLE` con explicación y no se investiga como hecho.
+4. **Given** una opinión o predicción reconocida (coincide con una afirmación `NOT_CHECKABLE` del catálogo o el motor real la clasifica así), **When** se envía, **Then** se muestra como no verificable con explicación y no se investiga como hecho.
 
 ---
 
@@ -104,9 +113,9 @@ investigar una frase pegada.
 ### Edge Cases
 
 - Páginas internas del navegador, tienda de extensiones, visor de PDF o ficheros locales → la acción no está disponible o el panel explica que esa página no es compatible.
-- Selección que contiene varias afirmaciones → se pide recortar a una; no se investigan varias a la vez.
+- Selección que contiene varias afirmaciones → el panel sugiere recortar a una; no hay detección automática en este MVP.
 - Selección con instrucciones embebidas («ignora lo anterior…») → se trata como texto, sin efecto.
-- Dirección de la página con parámetros, identificadores de sesión o fragmentos → nunca se envían; solo origen y ruta.
+- Dirección de la página con parámetros, identificadores de sesión o fragmentos → el panel muestra solo origen y ruta; la dirección nunca se envía.
 - Cambio de pestaña o nueva selección con una investigación en curso → el resultado tardío no se mezcla con la nueva selección.
 - Afirmación sin periodo o territorio explícitos en la frase → `NEEDS_CONTEXT` con explicación de qué falta, no se inventa.
 - Misma frase en dos medios o atribuida a oradores distintos → misma clasificación, prioridad y resultado.
@@ -121,14 +130,14 @@ investigar una frase pegada.
 - **FR-002**: La extensión MUST actuar solo por invocación explícita del usuario (menú contextual sobre texto seleccionado o botón de la extensión); nunca analiza páginas automáticamente ni en segundo plano.
 - **FR-003**: El acceso a una página MUST ser temporal y limitado a la pestaña donde el usuario invoca la acción; la extensión no obtiene acceso permanente a la navegación salvo a las páginas de vídeo compatibles ya cubiertas por 001.
 - **FR-004**: La extensión MUST obtener únicamente el texto seleccionado, la dirección (origen y ruta, sin parámetros ni fragmento) y el título de la página; nunca el cuerpo de la página, otras pestañas ni el historial.
-- **FR-005**: Antes de cualquier envío, el panel MUST mostrar exactamente qué se transmite y para qué, y permitir editar el texto y excluir la dirección y el título.
+- **FR-005**: Antes de cualquier envío, el panel MUST mostrar exactamente qué se transmite (solo el texto) y para qué, permitir editar el texto e indicar que medio, dirección y título no se envían.
 - **FR-006**: El texto a investigar MUST tener entre 10 y 500 caracteres; fuera de ese rango se rechaza con mensaje claro.
-- **FR-007**: El servicio MUST NOT descargar, rastrear ni almacenar el contenido de la página de origen; la dirección solo se guarda como procedencia y se muestra al usuario.
-- **FR-008**: Cada afirmación seleccionada MUST registrarse con procedencia «selección web» (texto, medio, dirección, título, fecha), sin timestamp, y mostrarse como «texto seleccionado por ti en <medio>».
+- **FR-007**: El servicio MUST NOT recibir, descargar, rastrear ni almacenar la dirección, el título ni el contenido de la página de origen; medio y dirección solo se muestran en el panel.
+- **FR-008**: Cada afirmación seleccionada MUST registrarse en el servicio solo con texto, marca de origen «selección web» y fecha, sin timestamp; el panel la muestra como «texto seleccionado por ti en <medio>» con datos locales.
 - **FR-009**: Artículos y vídeos MUST usar el mismo proceso de investigación, la misma política de evidencia y las mismas conclusiones de 001 (FR-005 a FR-008, FR-015, FR-016 de 001).
-- **FR-010**: Una investigación válida MUST reutilizarse entre canales cuando coincidan significado normalizado, entidad, territorio, periodo y versión de fuentes (FR-010 de 001), con independencia del canal o del medio.
+- **FR-010**: Una investigación válida MUST reutilizarse entre canales cuando el texto normalizado coincide con el de una afirmación del catálogo (se resuelve a esa afirmación y aplica FR-010 de 001), con independencia del canal o del medio. Sin coincidencia aproximada en este MVP.
 - **FR-011**: La clasificación, prioridad y resultado MUST ser invariantes al orador, al partido y al medio o dominio de origen.
-- **FR-012**: Opiniones y predicciones seleccionadas MUST marcarse `NOT_CHECKABLE` y no investigarse como hechos.
+- **FR-012**: Opiniones y predicciones MUST marcarse no verificables y no investigarse como hechos: rechazo si coinciden con una afirmación `NOT_CHECKABLE` del catálogo; en modo real, si el motor las clasifica así. Aplica también al texto pegado. En DEMO, sin coincidencia no se detectan (limitación documentada).
 - **FR-013**: El panel MUST abrirse desde el botón de la extensión en cualquier página, mostrando la guía de selección y «Pegar una afirmación» cuando no hay vídeo compatible.
 - **FR-014**: En páginas no compatibles (internas del navegador, tienda, visor de PDF, ficheros locales) la acción MUST no ofrecerse o explicar por qué no está disponible.
 - **FR-015**: El flujo de YouTube de 001 MUST seguir funcionando sin cambios de comportamiento.
@@ -139,7 +148,7 @@ investigar una frase pegada.
 
 ### Key Entities
 
-- **Afirmación de página (selección web)**: texto final (editado o no), medio (dominio), dirección sin parámetros, título, fecha de selección, indicador de que el usuario excluyó la dirección; inmutable una vez enviada.
+- **Afirmación de página (selección web)**: en el navegador, texto, medio (dominio), dirección sin parámetros, título y fecha de selección; en el servicio, solo texto final (editado o no), marca de origen y fecha. Inmutable una vez enviada.
 - **Investigación**: la de 001, cuyo origen puede ser ahora afirmación de vídeo, texto pegado o selección web.
 - **Fuente, Evidencia, Reporte**: sin cambios respecto a 001. La página de origen nunca es una fuente de evidencia.
 
@@ -150,16 +159,16 @@ investigar una frase pegada.
 - **SC-001**: Desde la frase seleccionada hasta iniciar la investigación en ≤2 interacciones (menú + confirmar).
 - **SC-002**: 0 accesos o envíos sobre páginas donde el usuario no invocó la extensión (suite E2E de navegación).
 - **SC-003**: La extensión no pide acceso permanente a sitios distintos de los de 001 (comprobación automática de los permisos declarados).
-- **SC-004**: 100 % de pares «misma afirmación desde vídeo y desde artículo» reutilizan la misma investigación válida.
+- **SC-004**: 100 % de pares «misma afirmación (texto normalizado idéntico) desde vídeo y desde artículo» reutilizan la misma investigación válida.
 - **SC-005**: 100 % de pares «misma frase, distinto medio» con igual clasificación, prioridad y resultado.
-- **SC-006**: 0 envíos de parámetros o fragmentos de la dirección de la página en la suite de pruebas.
+- **SC-006**: 0 envíos de dirección, título o medio de la página en la suite de pruebas; el panel nunca muestra parámetros ni fragmentos.
 - **SC-007**: Se mantienen los umbrales de calidad de 001 (SC-003, SC-004, SC-005, SC-007, SC-008) para afirmaciones de artículos.
 - **SC-008**: En validación con usuarios (objetivo provisional), ≥70 % de participantes completan sin ayuda la investigación de una frase de una noticia (gate humano, se documenta como pendiente).
 
 ## Assumptions
 
 - Chrome de escritorio, español, España. Ámbito: política española; las primeras fuentes conectadas siguen siendo las de 001 (verificaciones existentes, INE, corpus institucional) sobre economía, empleo y presupuestos.
-- El acceso temporal se basa en el permiso que el navegador concede al invocar la extensión en una pestaña (`activeTab`), junto con el menú contextual; el texto seleccionado llega con la propia acción del usuario, sin inyectar código en la página.
+- El acceso temporal se basa en el permiso que el navegador concede al invocar la extensión en una pestaña (`activeTab`), junto con el menú contextual; el texto seleccionado llega con la propia acción del usuario, sin inyectar código en la página. `activeTab` solo sirve para mostrar el título en el panel.
 - El panel se abre como respuesta directa al gesto del usuario en el menú contextual o el botón.
 - Sin el párrafo circundante, muchas afirmaciones terminarán en `NEEDS_CONTEXT`; leer contexto adicional de la página es candidato a P1 tras validar.
 - El resultado de un artículo no evalúa al medio ni al artículo, solo la afirmación seleccionada.
