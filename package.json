@@ -22,6 +22,7 @@
     "dev:worker": "pnpm --filter @polifamia/api run dev:worker",
     "e2e": "pnpm build && pnpm --filter @polifamia/extension run e2e",
     "dev:extension": "pnpm --filter @polifamia/contracts run build && pnpm --filter @polifamia/extension run dev",
+    "zip:extension": "pnpm --filter @polifamia/contracts run build && pnpm --filter @polifamia/extension run zip",
     "extract:claims": "pnpm --filter @polifamia/import-transcripts run extract",
     "eval:extraction": "pnpm --filter @polifamia/evaluation run eval:extraction",
     "eval:investigation": "pnpm --filter @polifamia/evaluation run eval:investigation"

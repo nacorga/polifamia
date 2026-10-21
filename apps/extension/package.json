@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "wxt",
     "build": "wxt build && node scripts/check-bundle.mjs .output/chrome-mv3",
-    "zip": "wxt zip",
+    "zip": "node -e \"if(!/^https:\\/\\//.test(process.env.WXT_API_URL||''))throw new Error('WXT_API_URL=https://… es obligatorio para publicar')\" && wxt zip && node scripts/check-bundle.mjs .output/chrome-mv3",
     "postinstall": "wxt prepare",
     "typecheck": "tsc --noEmit",
     "test": "tsc -b ../../packages/contracts && vitest run",

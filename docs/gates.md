@@ -271,6 +271,9 @@ usuarios hasta cerrar:
 - [ ] **G3 humano** — auditoría de cada referencia en la muestra de aceptación (≥95 %, 0 citas fabricadas).
 - [ ] **Privacidad/CWS** — responsable, contacto, DPA con proveedores, retención de texto manual.
 - [ ] **Prueba manual** en Chrome estable sobre youtube.com real.
-- [ ] **Despliegue** — aprobar coste y crear la app en DigitalOcean (`infra/digitalocean-app.yaml`).
+- [ ] **Despliegue** — aprobar coste y crear la app en DigitalOcean (`infra/digitalocean-app.yaml`; pasos en
+  `docs/deploy.md`). Imagen y TLS verificado contra la CA de la BD probados en local (2026-10-21).
+- [ ] **Chrome Web Store** — ficha, justificación de permisos y envío como privada (`docs/store-listing.md`); icono
+  definitivo y responsable/contacto en `docs/privacy.md` pendientes.
 - [ ] **Landing** — `site/index.html` preparada, **no publicada**; publicar en Vercel es decisión humana (`docs/release.md`).
 - [ ] **V1–V3** — usabilidad moderada, beta cerrada instrumentada, validación comercial (PRD §13).
