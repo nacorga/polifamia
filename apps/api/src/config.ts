@@ -15,6 +15,10 @@ const Env = z.object({
   RATE_LIMIT_PER_MINUTE: int(20),
   DEMO_DELAY_MS: z.coerce.number().int().min(0).default(1500),
   ANTHROPIC_API_KEY: z.string().optional(),
+  LLM_MODEL_EXTRACT: z.string().default('claude-haiku-5-5'),
+  LLM_MODEL_SYNTH: z.string().default('claude-opus-5-5'),
+  /** Documentos institucionales autorizados; por defecto `corpus/documents` del repositorio. */
+  CORPUS_DIR: z.string().optional(),
   FACTCHECK_API_KEY: z.string().optional(),
 });
 

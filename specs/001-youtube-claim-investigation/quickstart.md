@@ -59,4 +59,16 @@ Checks: `pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm b
 extensión en `.output/chrome-mv3-e2e` apuntando a :3199, recrea `polifamia_e2e`, levanta API + worker DEMO y
 ejecuta Playwright; primera vez: `pnpm --filter @polifamia/extension exec playwright install chromium`).
 
-Modo real (S4): `INVESTIGATION_MODE=real`, `ANTHROPIC_API_KEY`, `FACTCHECK_API_KEY` en el `.env` del servidor.
+Modo real (S4): `INVESTIGATION_MODE=real` en el `.env` del servidor y reiniciar `pnpm dev:worker`.
+
+- Sin `ANTHROPIC_API_KEY`: el worker arranca y cada investigación termina `FAILED` con `failureReason: no_llm_key`.
+- Con `ANTHROPIC_API_KEY`: recupera INE (series aprobadas) + corpus `corpus/documents`; con `FACTCHECK_API_KEY`
+  también verificaciones existentes. Modelos: `LLM_MODEL_EXTRACT`, `LLM_MODEL_SYNTH`.
+
+Evaluación del motor de evidencias:
+
+```bash
+pnpm eval:investigation              # offline: INE grabado + LLM guionizado (valida el pipeline determinista)
+pnpm eval:investigation -- --real    # en vivo; requiere ANTHROPIC_API_KEY (gasta dinero)
+pnpm --filter @polifamia/connectors record:fixtures   # regraba respuestas INE reales y el corpus BOE
+```

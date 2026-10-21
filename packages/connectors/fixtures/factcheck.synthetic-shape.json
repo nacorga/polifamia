@@ -1,0 +1,26 @@
+{
+  "_note": "SINTÉTICO: reproduce solo la FORMA documentada de claims.search (v1alpha1). No son verificaciones reales; dominios .example. Sustituir por una grabación real cuando exista FACTCHECK_API_KEY (G3).",
+  "body": {
+    "claims": [
+      {
+        "text": "[SINTÉTICO] La tasa de paro bajó del 12 % en el tercer trimestre de 2024",
+        "claimant": "[SINTÉTICO] Orador X",
+        "claimDate": "2024-11-02T00:00:00Z",
+        "claimReview": [
+          {
+            "publisher": { "name": "[SINTÉTICO] Verificador A", "site": "verificador-a.example" },
+            "url": "https://verificador-a.example/2024/11/paro-t3",
+            "title": "[SINTÉTICO] ¿Bajó el paro del 12 %?",
+            "reviewDate": "2024-11-03T00:00:00Z",
+            "textualRating": "Verdadero",
+            "languageCode": "es"
+          }
+        ]
+      },
+      {
+        "text": "[SINTÉTICO] Afirmación sin URL https",
+        "claimReview": [{ "url": "http://inseguro.example/x", "textualRating": "Falso" }]
+      }
+    ]
+  }
+}

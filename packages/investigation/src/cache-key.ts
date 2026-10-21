@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import type { NormalizedClaim } from '@polifamia/contracts';
 
 /** Versión del registro de fuentes/conectores; incrementar al cambiar fuentes (FR-010, research R8). */
-export const SOURCES_REVISION = 'sources-2026-10-21';
+export const SOURCES_REVISION = 'ine3-boe1-factcheck1@2026-10-21';
 
 /** Minúsculas, sin puntuación, espacios colapsados. Conserva acentos y cifras. */
 export function normalizeText(text: string): string {

@@ -22,7 +22,8 @@
     "e2e": "pnpm build && pnpm --filter @polifamia/extension run e2e",
     "dev:extension": "pnpm --filter @polifamia/contracts run build && pnpm --filter @polifamia/extension run dev",
     "extract:claims": "pnpm --filter @polifamia/import-transcripts run extract",
-    "eval:extraction": "pnpm --filter @polifamia/evaluation run eval:extraction"
+    "eval:extraction": "pnpm --filter @polifamia/evaluation run eval:extraction",
+    "eval:investigation": "pnpm --filter @polifamia/evaluation run eval:investigation"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

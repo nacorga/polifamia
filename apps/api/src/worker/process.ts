@@ -4,7 +4,7 @@ import {
   type InvestigationOutcome,
   type Investigator,
 } from '@polifamia/investigation';
-import { eq } from 'drizzle-orm';
+import { and, eq, inArray, isNull, lt } from 'drizzle-orm';
 import type { Db } from '../db/client.js';
 import { claims as claimsTable, evidence, investigations, sources } from '../db/schema.js';
 import { logger } from '../logger.js';
@@ -127,6 +127,18 @@ export async function processInvestigation(
         expiresAt: new Date(now.getTime() + outcome.ttlMs),
       })
       .where(eq(investigations.id, inv.id));
+    // Versionado (FR-015): la nueva versión sustituye a las anteriores de la misma clave; no se borran.
+    await tx
+      .update(investigations)
+      .set({ supersededBy: inv.id })
+      .where(
+        and(
+          eq(investigations.cacheKey, inv.cacheKey),
+          lt(investigations.version, inv.version),
+          isNull(investigations.supersededBy),
+          inArray(investigations.status, ['COMPLETED', 'INSUFFICIENT_EVIDENCE']),
+        ),
+      );
   });
   log.info(
     {

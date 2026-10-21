@@ -110,20 +110,20 @@ en verde, tareas marcadas `[x]`, notas de gate en `docs/gates.md`, commit en `00
 
 ## Phase 4 — S4: Motor de evidencias (D3)
 
-- [ ] T054 `packages/connectors/src/safe-fetch.ts`: whitelist de hosts, timeout, tamaño máximo, solo https; tests SSRF
-- [ ] T055 [P] Conector Fact Check Tools `claims.search` con fixtures reales grabados y mocks
-- [ ] T056 [P] Conector INE Tempus3 + registro de series aprobadas (paro EPA, PIB, IPC, afiliación…) con unidad/territorio/periodicidad; localizador = URL exacta de consulta
-- [ ] T057 [P] Corpus institucional `corpus/documents/*.json` (pasajes con URL, página/sección) + búsqueda léxica
-- [ ] T058 `EvidenceRetriever`: caché contextual → fact-checks → INE (según normalized.metric) → corpus; deduplicación de fuentes dependientes
-- [ ] T059 `stats.ts` determinista (variación absoluta, %, pp; comprobación de homogeneidad indicador/unidad/territorio) con tests
-- [ ] T060 `EvidenceVerifier` LLM: relación por evidencia citando IDs; validación de que extracto y localizador existen
-- [ ] T061 `evidence-policy.ts` determinista (R7) con tests exhaustivos (sin evidencia, solo contexto, apoyo+contradicción, fuente caída, sin localizador)
-- [ ] T062 `ExplanationGenerator`: summary/context/limitations con referencias solo a evidenceIds persistidos; validador de citas (rechaza IDs/URLs ajenos)
-- [ ] T063 `RealInvestigator` orquestando etapas con límites por job (llamadas, tokens, documentos, tiempo) y salida honesta al agotarse
-- [ ] T064 Provenance: `declared_source` solo si el orador cita la fuente explícitamente; resto `retrieved_evidence`/`unknown_origin`
-- [ ] T065 Versionado/caducidad (`expiresAt` por tipo de fuente), `superseded_by`, caché contextual FR-010
-- [ ] T066 `pnpm eval:investigation`: integridad de citas, abstención, contexto estadístico sobre el dataset (offline con fixtures)
-- [ ] T067 `docs/gates.md` G3 (pendiente humano: auditoría manual de cada referencia; comparación económico vs. capaz)
+- [x] T054 `packages/connectors/src/safe-fetch.ts`: whitelist de hosts, timeout, tamaño máximo, solo https; tests SSRF
+- [x] T055 [P] Conector Fact Check Tools `claims.search` con fixtures reales grabados y mocks
+- [x] T056 [P] Conector INE Tempus3 + registro de series aprobadas (paro EPA, PIB, IPC, afiliación…) con unidad/territorio/periodicidad; localizador = URL exacta de consulta
+- [x] T057 [P] Corpus institucional `corpus/documents/*.json` (pasajes con URL, página/sección) + búsqueda léxica
+- [x] T058 `EvidenceRetriever`: caché contextual → fact-checks → INE (según normalized.metric) → corpus; deduplicación de fuentes dependientes
+- [x] T059 `stats.ts` determinista (variación absoluta, %, pp; comprobación de homogeneidad indicador/unidad/territorio) con tests
+- [x] T060 `EvidenceVerifier` LLM: relación por evidencia citando IDs; validación de que extracto y localizador existen
+- [x] T061 `evidence-policy.ts` determinista (R7) con tests exhaustivos (sin evidencia, solo contexto, apoyo+contradicción, fuente caída, sin localizador)
+- [x] T062 `ExplanationGenerator`: summary/context/limitations con referencias solo a evidenceIds persistidos; validador de citas (rechaza IDs/URLs ajenos)
+- [x] T063 `RealInvestigator` orquestando etapas con límites por job (llamadas, tokens, documentos, tiempo) y salida honesta al agotarse
+- [x] T064 Provenance: `declared_source` solo si el orador cita la fuente explícitamente; resto `retrieved_evidence`/`unknown_origin`
+- [x] T065 Versionado/caducidad (`expiresAt` por tipo de fuente), `superseded_by`, caché contextual FR-010
+- [x] T066 `pnpm eval:investigation`: integridad de citas, abstención, contexto estadístico sobre el dataset (offline con fixtures)
+- [x] T067 `docs/gates.md` G3 (pendiente humano: auditoría manual de cada referencia; comparación económico vs. capaz)
 
 ---
 

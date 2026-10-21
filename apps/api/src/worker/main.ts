@@ -1,4 +1,15 @@
-import { DemoInvestigator, type Investigator } from '@polifamia/investigation';
+import { createFetcher, FACTCHECK_HOST, INE_HOST, loadCorpus } from '@polifamia/connectors';
+import {
+  AnthropicLlmClient,
+  DefaultEvidenceRetriever,
+  DemoInvestigator,
+  LlmEvidenceVerifier,
+  LlmExplanationGenerator,
+  NoLlmKeyInvestigator,
+  RealInvestigator,
+  type Investigator,
+} from '@polifamia/investigation';
+import { fileURLToPath } from 'node:url';
 import { loadConfig } from '../config.js';
 import { createDb } from '../db/client.js';
 import { logger } from '../logger.js';
@@ -9,12 +20,31 @@ const config = loadConfig();
 const { db, pool } = createDb(config.DATABASE_URL);
 const boss = await startBoss(config.DATABASE_URL, config.JOB_RETRY_LIMIT, config.JOB_TIMEOUT_MS);
 
-function buildInvestigator(): Investigator {
+async function buildInvestigator(): Promise<Investigator> {
   if (config.INVESTIGATION_MODE === 'demo') return new DemoInvestigator(config.DEMO_DELAY_MS);
-  // ponytail: el investigador real llega en S4 (T063/T068); hasta entonces modo real se niega a arrancar.
-  throw new Error('INVESTIGATION_MODE=real is not implemented yet (slice S4)');
+  // Sin clave el worker arranca igualmente y cada job termina FAILED/no_llm_key: nunca se inventa.
+  if (!config.ANTHROPIC_API_KEY) {
+    logger.warn('INVESTIGATION_MODE=real without ANTHROPIC_API_KEY: jobs will fail with no_llm_key');
+    return new NoLlmKeyInvestigator();
+  }
+  const corpusDir =
+    config.CORPUS_DIR ?? fileURLToPath(new URL('../../../../corpus/documents', import.meta.url));
+  const corpus = await loadCorpus(corpusDir);
+  const timeoutMs = Math.min(15_000, config.JOB_TIMEOUT_MS);
+  return new RealInvestigator({
+    llm: new AnthropicLlmClient(),
+    models: { extract: config.LLM_MODEL_EXTRACT, synth: config.LLM_MODEL_SYNTH },
+    retriever: new DefaultEvidenceRetriever({
+      ineFetcher: createFetcher([INE_HOST], { timeoutMs }),
+      factCheckFetcher: createFetcher([FACTCHECK_HOST], { timeoutMs }),
+      factCheckKey: config.FACTCHECK_API_KEY || undefined,
+      corpus,
+    }),
+    verifier: (llm) => new LlmEvidenceVerifier(llm, config.LLM_MODEL_SYNTH),
+    explainer: (llm) => new LlmExplanationGenerator(llm, config.LLM_MODEL_SYNTH),
+  });
 }
-const investigator = buildInvestigator();
+const investigator = await buildInvestigator();
 
 await boss.work<InvestigateJob>(INVESTIGATE_QUEUE, async ([job]) => {
   if (!job) return;

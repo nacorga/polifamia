@@ -85,5 +85,58 @@ Pendiente para cerrar G2:
   desacuerdos documentados). El seed actual (`packages/evaluation/data/extraction.seed.jsonl`, 40 ejemplos)
   está etiquetado solo por el equipo de desarrollo (`unreviewed-seed`).
 - Decidir umbrales preliminares de §12 a partir de la ejecución real; si no se alcanzan, reducir tipos admitidos.
-## G3 — Motor de evidencias (D3) · pendiente
+## G3 — Motor de evidencias (D3) · ITERAR (pendiente clave LLM y auditoría humana)
+
+Construido (S4, 2026-10-21):
+
+- `packages/connectors`:
+  - `safe-fetch`: whitelist exacta de hosts, solo https, sin IPs literales, credenciales ni puertos raros,
+    redirecciones revalidadas salto a salto, timeout y tamaño máximo.
+  - INE Tempus3 con registro de series aprobadas (`EPA452434` tasa de paro, `IPC251856` IPC variación
+    anual, `CNTR6597` PIB trimestral a precios corrientes), verificado contra la API real el 2026-10-21
+    (`SERIE/{cod}?det=1`). Consulta por periodo exacto (`?date=AAAAMMDD:AAAAMMDD`) o últimas observaciones.
+    El localizador de la evidencia es la URL exacta consultada.
+  - Fact Check Tools `claims.search` (forma documentada); se trata como índice, no como certificación.
+  - Corpus institucional `corpus/documents/*.json`: Real Decreto 145/2024 (SMI 2024, `BOE-A-2024-2251`),
+    artículos 1 y 3 copiados literalmente del BOE por `pnpm --filter @polifamia/connectors record:fixtures`.
+- `packages/investigation`:
+  - `stats.ts`: comparación determinista con fórmula, periodo y redondeo explícitos; solo
+    `supports`/`contradicts` si coinciden indicador, unidad, territorio y periodo exacto.
+  - `evidence-policy.ts` (R7): la conclusión la decide código. Solo fuentes primarias sostienen
+    `SUPPORTED`/`CONTRADICTED`; las verificaciones de terceros cuentan como contexto.
+  - `LlmEvidenceVerifier`: el LLM propone relación por evidencia; IDs desconocidos se descartan y lo no
+    evaluado queda `irrelevant`.
+  - `LlmExplanationGenerator` con validador de citas: rechaza IDs inexistentes, URLs en el texto y cifras
+    que no aparezcan en afirmación, evidencias o cálculo. Si falla, plantilla determinista.
+  - `RealInvestigator`: normaliza afirmaciones manuales con el extractor, recupera, verifica, decide y
+    sintetiza con presupuesto por job (`JobBudget`: llamadas, tokens, tiempo; documentos vía `maxDocuments`).
+    Fuente caída sin otra evidencia → `FAILED/source_unavailable`; fuentes respondiendo sin evidencia →
+    `INSUFFICIENT_EVIDENCE` («no significa que sea falsa»).
+  - Procedencia: `declared_source` solo si el orador nombra la fuente; el resto `retrieved_evidence`.
+  - Versionado: caducidad por origen (INE 30 d, verificaciones 90 d, corpus 180 d, sin evidencia 7 d);
+    una nueva versión de la misma clave marca `superseded_by` en las anteriores (no se borran).
+    `SOURCES_REVISION` = `ine3-boe1-factcheck1@2026-10-21` en la clave de caché (FR-010).
+- Worker: `INVESTIGATION_MODE=real` arranca; sin `ANTHROPIC_API_KEY` cada job termina `FAILED/no_llm_key`.
+
+Evidencia:
+
+- Tests: conectores 22 (SSRF, INE con respuestas reales grabadas, Fact Check, corpus), investigación 59
+  (stats, política, pipeline real con LLM falso, integridad de citas, inyección, presupuesto), evaluación 7,
+  API 15 (incluye pipeline real persistido con respuesta INE grabada, `no_llm_key` y supersesión).
+- `pnpm eval:investigation` (modo **offline-scripted**, 22 casos): precisión de resultado 1, 0 violaciones
+  de integridad de citas, 0 conclusiones categóricas sin evidencia primaria, contexto estadístico 9/9,
+  5 abstenciones, 1 fallo operativo esperado. **Solo valida el pipeline determinista; el LLM está
+  guionizado por caso.**
+- Smoke: API + worker en modo real sin clave → `POST` 202 → `FAILED`, `failureReason: no_llm_key`.
+
+Pendiente para cerrar G3:
+
+- **Operador**: `ANTHROPIC_API_KEY` → `pnpm eval:investigation -- --real` y comparar modelo económico vs.
+  capaz (`LLM_MODEL_SYNTH`) sobre el mismo corpus.
+- **Operador**: `FACTCHECK_API_KEY` → grabar una respuesta real de `claims.search` y sustituir
+  `packages/connectors/fixtures/factcheck.synthetic-shape.json` (hoy solo reproduce la forma documentada).
+- **Humano**: auditoría manual de cada referencia en la muestra de aceptación (≥95 % de correspondencia,
+  0 citas fabricadas, contexto estadístico ≥90 %); revisar términos de reutilización del corpus.
+- Ampliar registro INE y corpus (BOE, AIReF) según las afirmaciones del catálogo real (G0).
+
 ## G4 — Beta técnica (D4) · pendiente

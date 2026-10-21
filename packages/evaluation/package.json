@@ -12,9 +12,11 @@
   "scripts": {
     "build": "tsc -b",
     "test": "vitest run",
-    "eval:extraction": "tsc -b && node --env-file-if-exists=../../.env dist/eval-extraction.js"
+    "eval:extraction": "tsc -b && node --env-file-if-exists=../../.env dist/eval-extraction.js",
+    "eval:investigation": "tsc -b && node --env-file-if-exists=../../.env dist/eval-investigation.js"
   },
   "dependencies": {
+    "@polifamia/connectors": "workspace:*",
     "@polifamia/contracts": "workspace:*",
     "@polifamia/investigation": "workspace:*",
     "zod": "4.6.7"

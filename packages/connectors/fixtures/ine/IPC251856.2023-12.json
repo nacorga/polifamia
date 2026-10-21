@@ -1,0 +1,8 @@
+{
+  "_recorded": {
+    "url": "https://servicios.ine.es/wstempus/js/ES/DATOS_SERIE/IPC251856?date=20231201:20231231",
+    "fetchedAt": "2026-10-21T08:32:06.430Z",
+    "status": 200
+  },
+  "body": "{\"COD\":\"IPC251856\", \"Nombre\":\"Nacional. Índice general. Variación anual. \", \"FK_Unidad\":135, \"FK_Escala\":1, \"Data\":[{\"Fecha\":1701385200000, \"FK_TipoDato\":1, \"FK_Periodo\":12, \"Anyo\":2023, \"Valor\":3.1, \"Secreto\":false}\n]\n}\n"
+}
