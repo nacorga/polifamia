@@ -9,7 +9,7 @@ pública en la misma ficha, sin reinstalar. Ver `docs/gates.md` (G4, G5) antes d
 - [ ] API desplegada con su URL definitiva (`docs/deploy.md`) y zip generado con esa URL.
 - [ ] Política de privacidad publicada: completar en `docs/privacy.md` responsable del tratamiento y contacto
       (hoy «pendiente de definir»). URL a usar: `https://github.com/nacorga/polifamia/blob/main/docs/privacy.md`.
-- [ ] Icono definitivo: `apps/extension/public/icon/{16,32,48,128}.png` son **provisionales** (lupa sobre azul).
+- [ ] Icono definitivo: `apps/extension/public/icon/{16,32,48,128}.png` son **provisionales** (lupa sobre azul). Al sustituirlos, copiar el de 32 px a `site/favicon.png`.
 - [ ] Capturas 1280×800 (mínimo 1): panel con una selección en un artículo y un resultado con fuentes.
 
 ## Ficha
